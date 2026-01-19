@@ -1,0 +1,404 @@
+:root {
+  /* Kids Theme (Default) */
+  --color-bg-primary: #EEF8FF;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-surface: #E0F2FE;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #64748B;
+  --color-accent: #FFCE00;
+  /* IXL Gold */
+  --color-accent-hover: #FACC15;
+  --color-primary: #00A3DA;
+  /* Kid Blue */
+  --color-danger: #FF5252;
+  --color-success: #4CAF50;
+  --border-color: #CBD5E1;
+
+  /* Typography */
+  --font-family-body: 'Outfit', 'Quicksand', 'Inter', system-ui, sans-serif;
+  --font-family-serif: 'Lora', 'Georgia', serif;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.35rem;
+  --font-size-2xl: 1.75rem;
+
+  /* Spacing & Radius - Extra Rounded for Kids */
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  --animation-speed: 0.3s;
+
+  /* --- LUMILIBRO BRAND PALETTE (Rebrand 2025) --- */
+  /* "Warm • Curious • Calm • Magical" */
+  --lumi-blue: #4A6FA5;
+  /* Storybook Blue: Calm, Trustworthy */
+  --lumi-gold: #F6C66A;
+  /* Warm Golden Glow: Magic, Learning */
+  --lumi-lavender: #B8A7D6;
+  /* Soft Lavender: Gentle Accent */
+  --lumi-cream: #FFF4E6;
+  /* Paper Cream: Background, Cozy */
+  --lumi-text: #2D3748;
+  /* Softer Dark Grey for text */
+  --lumi-text-light: #718096;
+  /* Secondary text */
+}
+
+/* Adult/Professional Modern Light Mode Override */
+body.adult-mode {
+  --color-bg-primary: #F8FAFC;
+  /* Clean Slate 50 */
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-surface: #F1F5F9;
+  --color-text-primary: #0F172A;
+  /* Slate 900 - High Contrast */
+  --color-text-secondary: #475569;
+  /* Slate 600 - AA Accessible */
+  --color-accent: #0D9488;
+  /* Professional Teal */
+  --color-accent-hover: #0F766E;
+  --color-primary: #4F46E5;
+  /* Professional Indigo 600 */
+  --border-color: #E2E8F0;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --font-family-body: 'Inter', system-ui, sans-serif;
+}
+
+body.adult-mode .btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  border-bottom: none;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+}
+
+body.adult-mode .btn-primary:hover {
+  background-color: #4338CA;
+  transform: translateY(-1px);
+}
+
+body.adult-mode .card {
+  border: 1px solid var(--border-color);
+  background-color: white;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+body.adult-mode .btn-accent {
+  background-color: var(--color-accent);
+  color: white;
+  border-bottom: none;
+}
+
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+b.font-serif {
+  font-family: var(--font-family-serif);
+  letter-spacing: -0.01em;
+}
+
+.glow-shadow {
+  box-shadow: 0 0 20px rgba(246, 198, 106, 0.4);
+  filter: drop-shadow(0 0 10px rgba(246, 198, 106, 0.2));
+}
+
+.glow-text {
+  text-shadow: 0 0 10px rgba(246, 198, 106, 0.5);
+}
+
+.magic-paper {
+  background-color: var(--lumi-cream);
+  background-image: radial-gradient(#e5e7eb 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+}
+
+body {
+  font-family: var(--font-family-body);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    font-family 0.5s ease;
+
+  /* Prevent scrolling overflow on some mobile browsers */
+  overflow-x: hidden;
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem;
+  /* Default padding */
+  padding-top: calc(1rem + env(safe-area-inset-top));
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  width: 100%;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  background: none;
+  color: inherit;
+}
+
+/* Utilities */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: all var(--animation-speed) ease;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  border-bottom: 4px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 163, 218, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary);
+  transform: translateY(-2px);
+  border-bottom-width: 6px;
+  box-shadow: 0 8px 25px rgba(0, 163, 218, 0.5);
+}
+
+.btn-primary:active {
+  transform: translateY(2px);
+  border-bottom-width: 0;
+}
+
+.btn-accent {
+  background-color: var(--color-accent);
+  color: #1E293B;
+  border-bottom: 4px solid rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary {
+  background-color: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  border: 2px solid var(--border-color);
+}
+
+.card {
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  border: 4px solid var(--color-bg-surface);
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: var(--font-size-base);
+  transition: all var(--animation-speed) ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(0, 163, 218, 0.1);
+}
+
+/* Polished Dropdown Carots */
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.2rem;
+  padding-right: 3rem;
+}
+
+body.adult-mode select.input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Mobile specific paddings */
+@media (max-width: 640px) {
+  .container {
+    padding-left: calc(1.5rem + env(safe-area-inset-left));
+    padding-right: calc(1.5rem + env(safe-area-inset-right));
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  .hide-mobile {
+    display: none;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+}
+
+/* Casting Bench Styles */
+.casting-bench {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  scrollbar-width: none;
+}
+
+.casting-bench::-webkit-scrollbar {
+  display: none;
+}
+
+.casting-bench-item {
+  flex: 0 0 auto;
+  width: 120px;
+  background: white;
+  border: 2px solid #E2E8F0;
+  border-radius: 20px;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.casting-bench-item:hover {
+  border-color: #8B5CF6;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.1);
+}
+
+.casting-bench-item .invite-btn {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #8B5CF6;
+  background: #F5F3FF;
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  width: 100%;
+}
+
+/* Ghost Slot Styles */
+.ghost-slot {
+  background: rgba(255, 255, 255, 0.5);
+  border: 3px dashed #CBD5E1;
+  border-radius: 25px;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 200px;
+}
+
+.ghost-slot:hover {
+  border-color: #8B5CF6;
+  background: rgba(139, 92, 246, 0.05);
+  transform: scale(1.02);
+}
+
+.ghost-slot-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #F1F5F9;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.ghost-slot:hover .ghost-slot-icon {
+  background: #8B5CF6;
+  color: white;
+  transform: rotate(90deg);
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
