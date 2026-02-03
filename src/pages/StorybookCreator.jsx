@@ -586,8 +586,18 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
         const charSummary = characters.map(c => {
             const robotDetails = c.type === 'Robot' ? `, a mechanical being with a metallic silver body, visible brass gears, and glowing blue LED eyes` : '';
             const speciesDesc = c.type === 'Kid' ? 'stylized human child' : c.type === 'Adult' ? 'stylized human adult' : c.type;
-            const personality = CHARACTER_OPTIONS[c.type].personalities.find(p => p.label === c.personality) || DEFAULT_PERSONALITY;
-            return `[CHARACTER INFO NAME: ${c.name} | SPECIES: ${c.type} | PERSONALITY: ${c.personality} (${personality.description}) | MANDATORY VISUAL DESCRIPTION: A cute ${speciesDesc}${robotDetails} with ${c.hair} hair/color, ${c.eyes} eyes, ${c.skin} skin tone, wearing ${c.clothes}]`;
+            const personality = CHARACTER_OPTIONS[c.type].personalities.find(p => p.label === c.personality) || { description: '' };
+
+            // Build visual parts dynamically to avoid 'null' fields
+            const parts = [];
+            if (c.hair) parts.push(`${c.hair} hair/color`);
+            if (c.eyes) parts.push(`${c.eyes} eyes`);
+            if (c.skin && c.skin !== 'null') parts.push(`${c.skin} skin tone`);
+            if (c.clothes && c.clothes !== 'None') parts.push(`wearing ${c.clothes}`);
+
+            const visualDesc = parts.length > 0 ? `with ${parts.join(', ')}` : '';
+
+            return `[CHARACTER INFO NAME: ${c.name} | SPECIES: ${c.type} | PERSONALITY: ${c.personality} (${personality.description}) | MANDATORY VISUAL DESCRIPTION: A cute ${speciesDesc}${robotDetails} ${visualDesc}]`;
         }).join('\n');
 
         const pageLimit = isTestMode ? "EXACTLY 1 page" : "5-7 pages";
@@ -606,11 +616,11 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
         const systemPrompt = `You are a world-class, award-winning children's book author and magical illustrator. 
             YOUR MISSION: Create a ${readingTime} minute story for a child (Age: ${ageLevel}) that is CAPTIVATING, JOYFUL, and MAGICAL.
             
-            STORY STRUCTURE RULES:
-            - BEGINNING: Set the scene and introduce the characters with warmth. Establish a sense of wonder.
-            - MIDDLE: Introduce a small obstacle, a mystery, or a playful challenge that the characters must solve together.
-            - END: A heartwarming and satisfying resolution that leaves the child feeling happy and inspired.
-            - PACING: Do not be "matter of fact". Use descriptive, sensory language (sights, sounds, feelings).
+            STORY STRUCTURE RULES (KID-CENTRIC):
+            - LANGUAGE & VIBE: Use magical, sensory words. Include onomatopoeia (e.g., "¡Zis! ¡Zas!", "Whoosh!", "¡Boing!") to make the story fun to read aloud.
+            - EMOTIONAL HEART: Focus on friendship, kindness, and curiosity. Characters should help each other and share moments of pure "Wow!".
+            - INTERACTIVE SPARK: Occasionally add a gentle question within the text (e.g., "¿Puedes imaginar algo tan brillante?") to keep the child engaged.
+            - WARM ENDING: The story MUST end with a "Warm Hug" feeling—a sense of safety, happiness, and inspiration.
             - TEXT LENGTH: Each page should have 3-5 RICH sentences. It is better to have more descriptive text than short, dry facts. Use natural, engaging Spanish at the ${spanishLevel} level.
 
             ${charSummary}
@@ -642,16 +652,23 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
             - EXPRESSIONS: Always describe the characters' emotions (e.g., "wide eyes filled with wonder", "a mischievous giggle", "a warm, gentle smile").
             - DYNAMICS: Characters should be doing something magical or active, not just standing there.
             - FORMAT: "A [Visual Description] named [Name] and a [Visual Description] named [Name]..."
+            - MAGICAL FIDELITY: If the story contains magical, abstract, or imaginary elements (e.g., "imaginary friends made of stardust"), you MUST explicitly describe their physical appearance in the image prompt (e.g., "surrounded by translucent, glowing figures made of sparkling golden stardust that have friendly faces") so the image generator doesn't ignore them.
 
-            PHASE 3: ILLUSTRATOR'S DIRECTION:
-            1. SETTING ANCHOR: Refer to the specific location details (e.g., "sparkling dust in the attic", "glowing coral in the sea") consistently in every page.
-            2. COMPOSITION: Use "Cinematic lighting", "Soft glow", "Vibrant colors", and "Perspective: Wide/Medium/Close-up" to guide the art.
-            3. ROSTER: Use ONLY the provided characters: ${characters.map(c => c.name).join(', ')}.
-            4. STYLE ADHERENCE: All characters, especially humans, MUST strictly follow the ${selectedStyle.label} aesthetic. Never use photorealistic features for humans.
+            PHASE 3: ILLUSTRATOR'S DIRECTION (VISUAL CLARITY FOR YOUNG EYES):
+            1. LARGE EXPRESSIVE FEATURES: Always describe characters with "large, expressive eyes" and "clear, friendly smiles" to help kids identify emotions instantly.
+            2. FOCAL POINTS: In image prompts, emphasize one big, clear action or object (the "Star of the Page") so the composition isn't too cluttered for a 3-year-old's eyes.
+            3. COLOR MAGIC: Use words like "Glimmering", "Rainbow-hued", "Soft moonlit glow", and "Vibrant colors" to create high visual interest.
+            4. ROSTER: Use ONLY the provided characters: ${characters.map(c => c.name).join(', ')}.
+            5. STYLE ADHERENCE (WORLD VIEW CONSISTENCY):
+               - MANDATORY AESTHETIC: Every single "imagePrompt" you generate MUST explicitly start or end with the phrase: "In the style of ${selectedStyle.label}."
+               - TOTAL UNIVERSE LOCK: The entire world—including backgrounds, lighting, and magical effects—must strictly adhere to the ${selectedStyle.label} aesthetic.
+               - NO OVERLAPPING STYLES: If the style is "${selectedStyle.label}", do not describe anything using "photorealistic", "3d render", or "cinematic digital art" terms unless they specifically belong to that style.
+               - HUMAN CHARACTER INTEGRITY: Humans must never look realistic. They must be stylized to match the ${selectedStyle.label} world perfectly.
 
             VISUAL POLISH:
             - NO text, letters, or watermarks in the image prompts.
             - Ensure wide-angle "master shots" to capture the environment and characters.
+            - Use cinematic but kid-friendly camera angles (Close-ups for emotions, Wide for "Whoa!" moments).
             `;
 
         try {

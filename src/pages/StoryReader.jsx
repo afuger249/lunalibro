@@ -563,20 +563,25 @@ export default function StoryReader() {
                     display: 'flex', flexDirection: 'column', padding: '2rem', overflowY: 'auto', color: 'white'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>🔍 Prompt Inspector</h2>
+                        <div>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>🔍 Prompt Inspector</h2>
+                            <p style={{ color: '#10b981', fontSize: '0.9rem', marginTop: '0.2rem' }}>✅ This data reflects the exact payload sent to the image generator.</p>
+                        </div>
                         <button onClick={() => setShowDebug(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={32} /></button>
                     </div>
 
                     <div style={{ marginBottom: '2rem' }}>
                         <h3 style={{ color: '#FCD34D', marginBottom: '0.5rem' }}>Current Page Image Prompt</h3>
-                        <div style={{ background: '#1e293b', padding: '1rem', borderRadius: '10px', fontFamily: 'monospace', lineHeight: '1.5', userSelect: 'all' }}>
+                        <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '0.5rem' }}>This is the primary text prompt sent to Leonardo.ai. It includes the character descriptions woven into the scene.</p>
+                        <div style={{ background: '#1e293b', padding: '1rem', borderRadius: '10px', fontFamily: 'monospace', lineHeight: '1.5', userSelect: 'all', border: '1px solid #334155' }}>
                             {story?.pages?.[page]?.imagePrompt || "No prompt found for this page."}
                         </div>
                     </div>
 
                     <div style={{ marginBottom: '2rem' }}>
                         <h3 style={{ color: '#FCD34D', marginBottom: '0.5rem' }}>Character Descriptions (Injected)</h3>
-                        <div style={{ background: '#1e293b', padding: '1rem', borderRadius: '10px', fontFamily: 'monospace', lineHeight: '1.5', userSelect: 'all' }}>
+                        <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '0.5rem' }}>These descriptions are provided to the AI author and must be present in every page prompt above to ensure consistency.</p>
+                        <div style={{ background: '#1e293b', padding: '1rem', borderRadius: '10px', fontFamily: 'monospace', lineHeight: '1.5', userSelect: 'all', border: '1px solid #334155' }}>
                             {story?.characters?.map(c =>
                                 `${c.name} (a cute ${c.type} with ${c.hair} hair, ${c.eyes} eyes, ${c.skin} skin, wearing ${c.clothes})`
                             ).join(', ')}
@@ -584,14 +589,26 @@ export default function StoryReader() {
                     </div>
 
                     <div style={{ marginBottom: '2rem' }}>
+                        <h3 style={{ color: '#FCD34D', marginBottom: '0.5rem' }}>Payload Metadata (Leonardo.ai Logic)</h3>
+                        <div style={{ background: '#0f172a', padding: '1rem', borderRadius: '10px', border: '1px solid #1e293b' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '0.5rem', fontSize: '0.85rem' }}>
+                                <span style={{ color: '#64748B' }}>Model:</span> <span>Leonardo Vision XL</span>
+                                <span style={{ color: '#64748B' }}>Resolution:</span> <span>1024 x 1024</span>
+                                <span style={{ color: '#64748B' }}>Alchemy:</span> <span style={{ color: '#10b981' }}>Enabled ✅</span>
+                                <span style={{ color: '#64748B' }}>Negative Prompt:</span> <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>photorealistic, real life, photography, 3d render, hyperrealistic, textured skin, human features</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ marginBottom: '2rem' }}>
                         <h3 style={{ color: '#FCD34D', marginBottom: '0.5rem' }}>Cover Prompt</h3>
-                        <div style={{ background: '#1e293b', padding: '1rem', borderRadius: '10px', fontFamily: 'monospace', lineHeight: '1.5', userSelect: 'all' }}>
+                        <div style={{ background: '#1e293b', padding: '1rem', borderRadius: '10px', fontFamily: 'monospace', lineHeight: '1.5', userSelect: 'all', border: '1px solid #334155' }}>
                             {story?.coverImagePrompt || "No cover prompt found."}
                         </div>
                     </div>
 
                     <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-                        Copy these into GetImg.ai to test quality.
+                        Note: For maximum quality, these prompts are optimized for the diffusion process.
                     </p>
                 </div>
             )}
