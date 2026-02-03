@@ -77,7 +77,7 @@ export const generateStoryPDF = async (story) => {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(12);
         doc.setTextColor(100);
-        doc.text("Created with LumiLibro", pageWidth / 2, pageHeight - 30, { align: "center" });
+        doc.text("Created with Luna and Friends", pageWidth / 2, pageHeight - 30, { align: "center" });
 
         // Date
         doc.setFontSize(10);
@@ -144,7 +144,7 @@ export const generateStoryPDF = async (story) => {
         const fileName = `${safeTitle || 'story'}.pdf`;
 
         // Metadata
-        doc.setProperties({ title: storyTitle, author: "LumiLibro" });
+        doc.setProperties({ title: storyTitle, author: "Luna and Friends" });
 
         const pdfData = doc.output('arraybuffer');
         // V15: Using octet-stream to trick webviews into respecting the 'download' attribute

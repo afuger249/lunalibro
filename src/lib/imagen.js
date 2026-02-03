@@ -6,9 +6,8 @@ import { supabase } from './supabase';
  */
 
 export const generateStoryImage = async (prompt) => {
-    // Style Anchor for 3D Animation look (Generic to avoid copyright filters)
-    const styleAnchor = "In the style of a modern high-end 3D animated film, vibrant colors, soft lighting, charming character design, cinematic composition, 4k, digital art.";
-    const finalPrompt = `${styleAnchor} Scene: ${prompt}`;
+    // Style Anchor removed to allow user-selected styles to take effect
+    const finalPrompt = prompt;
 
     try {
         const { data, error } = await supabase.functions.invoke('generate-image', {

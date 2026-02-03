@@ -1,7 +1,6 @@
 
 import { motion } from 'framer-motion';
-import loadingIllustration from '../assets/lumilibro_logo.png';
-import splashBackground from '../assets/lumilibro_splash.png';
+import loadingIllustration from '../assets/luna_and_friends_logo.png';
 
 export default function LoadingPage() {
     return (
@@ -12,13 +11,39 @@ export default function LoadingPage() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: `url(${splashBackground}) center/cover no-repeat`,
+            background: 'linear-gradient(135deg, #06B6D4 0%, #22C55E 100%)', // Vibrant Cyan to Green
             gap: '2rem',
             overflow: 'hidden',
             position: 'relative'
         }}>
-            {/* Darkening Overlay for readability */}
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(15, 23, 42, 0.4)', zIndex: 1 }} />
+            {/* Animated bubbles in the background */}
+            {[...Array(6)].map((_, i) => (
+                <motion.div
+                    key={i}
+                    animate={{
+                        y: [-20, -1000],
+                        opacity: [0, 0.5, 0],
+                        x: [0, (i % 2 === 0 ? 50 : -50)]
+                    }}
+                    transition={{
+                        duration: 5 + i,
+                        repeat: Infinity,
+                        delay: i * 1.5,
+                        ease: "linear"
+                    }}
+                    style={{
+                        position: 'absolute',
+                        bottom: -50,
+                        left: `${15 * i + 10}%`,
+                        width: `${20 + i * 10}px`,
+                        height: `${20 + i * 10}px`,
+                        borderRadius: '50%',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        zIndex: 1
+                    }}
+                />
+            ))}
 
             <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -31,68 +56,65 @@ export default function LoadingPage() {
                     ease: "easeOut"
                 }}
                 style={{
-                    width: '180px',
-                    height: '180px',
+                    width: '220px',
+                    height: '220px',
                     borderRadius: '50%',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
                     backdropFilter: 'blur(20px)',
                     padding: '20px',
-                    boxShadow: '0 0 50px rgba(245, 158, 11, 0.3)',
+                    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.1), 0 0 30px rgba(6, 182, 212, 0.4)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: '4px solid rgba(245, 158, 11, 0.5)',
+                    border: '4px solid rgba(255, 255, 255, 0.4)',
                     zIndex: 2
                 }}
             >
                 <motion.div
                     animate={{
                         scale: [1, 1.05, 1],
-                        filter: [
-                            'drop-shadow(0 0 20px rgba(246, 198, 106, 0.4))',
-                            'drop-shadow(0 0 40px rgba(246, 198, 106, 0.8))',
-                            'drop-shadow(0 0 20px rgba(246, 198, 106, 0.4))'
-                        ]
+                        rotate: [0, 2, 0, -2, 0]
                     }}
                     transition={{
-                        duration: 3,
+                        duration: 4,
                         repeat: Infinity,
                         ease: "easeInOut"
                     }}
                     style={{
-                        width: '180px',
-                        height: '180px',
-                        marginBottom: '3rem',
+                        width: '100%',
+                        height: '100%',
                         position: 'relative',
                         zIndex: 2
                     }}
                 >
                     <img
                         src={loadingIllustration}
-                        alt="LumiLibro Logo"
+                        alt="Luna and Friends Logo"
                         style={{
                             width: '100%',
                             height: '100%',
                             objectFit: 'contain',
+                            filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))'
                         }}
                     />
                 </motion.div>
             </motion.div>
 
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', zIndex: 10 }}>
                 <motion.h1
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.3 }}
                     style={{
-                        fontSize: '2rem',
+                        fontSize: '2.5rem',
                         fontWeight: '900',
-                        color: 'var(--color-primary)',
+                        color: 'white',
                         marginBottom: '0.5rem',
-                        letterSpacing: '-0.02em'
+                        letterSpacing: '-0.02em',
+                        textShadow: '0 4px 12px rgba(0,0,0,0.1)'
                     }}
                 >
-                    LUMI<span style={{ color: 'var(--color-accent)' }}>LIBRO</span>
+                    LUNA <span style={{ color: '#F43F5E' }}>& FRIENDS</span>
                 </motion.h1>
 
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
@@ -112,7 +134,7 @@ export default function LoadingPage() {
                                 width: '12px',
                                 height: '12px',
                                 borderRadius: '50%',
-                                backgroundColor: 'var(--color-primary)'
+                                backgroundColor: 'white'
                             }}
                         />
                     ))}
@@ -122,13 +144,14 @@ export default function LoadingPage() {
             <p style={{
                 position: 'fixed',
                 bottom: '3rem',
-                color: 'var(--color-text-secondary)',
-                fontWeight: 'bold',
-                fontSize: '0.9rem',
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontWeight: '800',
+                fontSize: '1rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.1em'
+                letterSpacing: '0.15em',
+                zIndex: 10
             }}>
-                Preparing your adventure...
+                Luna is getting ready...
             </p>
         </div>
     );

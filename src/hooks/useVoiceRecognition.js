@@ -14,12 +14,14 @@ export const useVoiceRecognition = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
 
-        recognition.lang = 'es-ES'; // Spanish (Spain) - can also use 'es-MX' for Mexican Spanish
+        // Optimized for Spanish (Mexican Spanish is more standard for this app's context)
+        recognition.lang = 'es-MX';
         recognition.continuous = false;
-        recognition.interimResults = true; // Enable interim results for real-time display
-        recognition.maxAlternatives = 3; // Get multiple alternatives for better matching
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 5; // Increased alternatives for better matching
 
         recognition.onstart = () => {
+            console.log('Voice Recognition started in:', recognition.lang);
             setIsListening(true);
         };
 
@@ -84,6 +86,7 @@ export const useVoiceRecognition = () => {
         };
 
         try {
+            recognition.lang = 'es-MX'; // Double check language is set
             recognition.start();
         } catch (error) {
             console.error('Error starting recognition:', error);
@@ -124,11 +127,14 @@ function checkFuzzyMatch(spoken, expected) {
 }
 
 /**
- * Remove Spanish articles
+ * Remove Spanish articles and common filler words
  */
 function removeArticles(text) {
+    if (!text) return '';
     return text
-        .replace(/^(el|la|los|las|un|una|unos|unas)\s+/gi, '')
+        .toLowerCase()
+        .replace(/^(el|la|los|las|un|una|unos|unas|yo|soy|es|son)\s+/gi, '') // Added more common starts
+        .replace(/\s+(el|la|los|las|un|una|unos|unas)$/gi, '') // Articles at end
         .trim();
 }
 

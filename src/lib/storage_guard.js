@@ -42,8 +42,8 @@ export const cleanupOldData = () => {
 
     const legacyPrefixes = ['story_', 'temp_', 'chat_'];
     const specificKeys = [
-        'LUMILIBRO_STORY_SEED',
-        'LUMILIBRO_COMPLETED_NODE',
+        'LUNALIBRO_STORY_SEED',
+        'LUNALIBRO_COMPLETED_NODE',
         'chat_sessions'
     ];
 

@@ -42,7 +42,7 @@ import {
     IceCream
 } from 'lucide-react';
 
-import { generateOpenAISpeech } from '../lib/openai_tts';
+import { generateSpeech } from '../lib/tts';
 import { generateStoryImage } from '../lib/imagen';
 
 // Avatar Assets
@@ -287,7 +287,7 @@ export default function ScenarioAdmin() {
                                         )}
                                         {sc.avatar_url ? 'Custom Avatar' : (AVATAR_MAP[sc.avatar_type || 'barista']?.name || 'Barista')}
                                     </div>
-                                    <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--color-primary-faded)', color: 'var(--color-primary)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>🎤 {sc.voice_id || 'nova'}</span>
+                                    <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--color-primary-faded)', color: 'var(--color-primary)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>🎤 {sc.voice_id || 'es-MX-DaliaNeural'}</span>
                                     {!sc.is_active && <span style={{ fontSize: '0.7rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>Inactive</span>}
                                 </div>
                                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{sc.description}</p>
@@ -316,9 +316,9 @@ function ScenarioForm({ formData, setFormData, onSave, onCancel }) {
     const playVoicePreview = async () => {
         setPreviewLoading(true);
         try {
-            const voiceId = formData.voice_id || 'nova';
-            const text = "Hola, soy tu guía de LumiLibro. ¿Estás listo para una aventura?";
-            const url = await generateOpenAISpeech(text, voiceId, 1.0);
+            const voiceId = formData.voice_id || 'es-MX-DaliaNeural';
+            const text = "Hola, soy tu guía de Luna and Friends. ¿Estás listo para una aventura?";
+            const url = await generateSpeech(text, voiceId, 1.0);
             const audio = new Audio(url);
             audio.play();
         } catch (err) {

@@ -24,6 +24,10 @@ const Legal = lazy(() => import('./pages/Legal'));
 const WordRush = lazy(() => import('./pages/WordRush'));
 const Collection = lazy(() => import('./pages/Collection'));
 
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { Keyboard } from '@capacitor/keyboard';
+import { App as CapApp } from '@capacitor/app';
+
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,6 +37,34 @@ function App() {
   const [spanishLevel, setSpanishLevel] = useState(() => {
     return localStorage.getItem('spanishLevel') || 'A1';
   });
+
+  // Native Mobile Initialization
+  useEffect(() => {
+    const initNative = async () => {
+      try {
+        // Set Status Bar
+        await StatusBar.setStyle({ style: Style.Light });
+        await StatusBar.setBackgroundColor({ color: '#f0f9ff' });
+
+        // Keyboard Handling
+        if (Keyboard) {
+          Keyboard.setAccessoryBarVisible({ isVisible: true });
+        }
+
+        // Handle Back Button (Android)
+        capApp.addListener('backButton', ({ canGoBack }) => {
+          if (!canGoBack) {
+            capApp.exitApp();
+          } else {
+            window.history.back();
+          }
+        });
+      } catch (err) {
+        console.warn('Native initialization skipped (not a mobile device):', err);
+      }
+    };
+    initNative();
+  }, []);
 
   useEffect(() => {
     if (ageLevel === 'adult') {

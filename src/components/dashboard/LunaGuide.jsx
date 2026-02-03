@@ -1,9 +1,9 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import lumiChar from '../../assets/dashboard/bee_character.png'; // Repling old guide with new Bee
+import lunaChar from '../../assets/luna_and_friends_logo.png'; // Using the logo as guide for now
 
-export default function LumiGuide() {
+export default function LunaGuide() {
     const [showTooltip, setShowTooltip] = useState(false);
 
     useEffect(() => {
@@ -15,10 +15,10 @@ export default function LumiGuide() {
     return (
         <div style={{
             position: 'absolute',
-            top: '20%', // Adjusted position
+            top: '20%',
             right: '15%',
             zIndex: 50,
-            pointerEvents: 'none' // Let clicks pass through unless on tooltip
+            pointerEvents: 'none'
         }}>
             <motion.div
                 initial={{ opacity: 0, scale: 0.5 }}
@@ -29,24 +29,22 @@ export default function LumiGuide() {
                     scale: { duration: 0.5 }
                 }}
                 style={{
-                    width: '120px',
-                    height: '120px',
+                    width: '140px',
+                    height: '140px',
                     position: 'relative'
                 }}
             >
                 <img
-                    src={lumiChar}
-                    alt="Lumi Guide"
+                    src={lunaChar}
+                    alt="Luna Guide"
                     style={{
                         width: '100%',
                         height: '100%',
                         objectFit: 'contain',
-                        filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.2))'
+                        filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.2))'
                     }}
                 />
             </motion.div>
-
-            {/* Greeting moved to SunMoonLayout Header */}
         </div>
     );
 }

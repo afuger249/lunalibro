@@ -37,7 +37,7 @@ export default function MoonCard({ onClick }) {
                     }
 
                     .moon-content {
-                        margin-left: 45%;
+                        margin-left: 52%;
                         display: flex;
                         flex-direction: column;
                         align-items: flex-start;
@@ -79,9 +79,9 @@ export default function MoonCard({ onClick }) {
 
                     .moon-image-wrapper {
                         position: absolute;
-                        top: -85px; /* Moved up another 15px */
-                        left: -45px;
-                        width: 290px;
+                        top: -85px; 
+                        left: -55px;
+                        width: 280px;
                         z-index: 1; /* Behind text */
                     }
 

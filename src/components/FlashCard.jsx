@@ -4,6 +4,7 @@ import { Mic, Volume2, SkipForward, CheckCircle, XCircle, RotateCcw, Flame } fro
 import confetti from 'canvas-confetti';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { supabase } from '../lib/supabase';
+import { soundEffects } from '../lib/sounds';
 
 export default function FlashCard({ word, onCorrect, onIncorrect, onSkip, ageLevel, currentStreak = 0 }) {
     const [showAnswer, setShowAnswer] = useState(false);
@@ -41,6 +42,7 @@ export default function FlashCard({ word, onCorrect, onIncorrect, onSkip, ageLev
                 setShowAnswer(true);
                 setInterimText('');
                 fireConfetti();
+                soundEffects.playSuccess();
 
                 // Ripple effect
                 const mic = document.getElementById('mic-button');
@@ -96,9 +98,9 @@ export default function FlashCard({ word, onCorrect, onIncorrect, onSkip, ageLev
     // Play Spanish pronunciation
     const playPronunciation = async () => {
         try {
-            // Use the existing OpenAI TTS helper
-            const { generateOpenAISpeech } = await import('../lib/openai_tts');
-            const audioUrl = await generateOpenAISpeech(word.spanish_word, 'nova', 1.0);
+            // Use Azure TTS with Spanish voice
+            const { generateSpeech } = await import('../lib/tts');
+            const audioUrl = await generateSpeech(word.spanish_word, 'es-MX-DaliaNeural', 1.0);
 
             const audio = new Audio(audioUrl);
             audio.play();

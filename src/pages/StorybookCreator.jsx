@@ -9,13 +9,12 @@ import { generatePixelDojoImage } from '../lib/pixeldojo';
 import { saveCharacter, getSavedCharacters, deleteCharacter } from '../lib/character_storage';
 import { saveStorybook, getStorybookById } from '../lib/storybook_storage';
 import { supabase } from '../lib/supabase';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { checkStorageQuota, cleanupOldData, deepCleanupOldData, getStorageReport, nuclearCleanup } from '../lib/storage_guard';
 import CustomModal from '../components/CustomModal';
 import PremiumSelect from '../components/PremiumSelect';
 import { generateCandidatePortraits, generateLeonardoImage } from '../lib/leonardo';
 
-// Data for visual selectors
-// Data for visual selectors
 const CHARACTER_OPTIONS = {
     Kid: {
         hair: {
@@ -43,6 +42,13 @@ const CHARACTER_OPTIONS = {
             label: "Outfit",
             options: ['Red Shirt', 'Blue Hoodie', 'Space Suit', 'Princess Dress', 'Superhero Cape', 'School Uniform', 'Pajamas']
         },
+        personalities: [
+            { label: 'Silly', emoji: '🤪', description: 'mischievous, joking, funny face, energetic' },
+            { label: 'Brave', emoji: '🛡️', description: 'heroic, confident, standing tall, determined look' },
+            { label: 'Kind', emoji: '🌟', description: 'helpful, gentle, warm smile, caring pose' },
+            { label: 'Curious', emoji: '🕵️', description: 'inquisitive, wide-eyed, tilt of head, exploring' },
+            { label: 'Sleepy', emoji: '😴', description: 'yawning, cozy, relaxed, ready for bed' }
+        ],
         hasEyes: true
     },
     Adult: {
@@ -69,6 +75,13 @@ const CHARACTER_OPTIONS = {
             label: "Attire",
             options: ['Suit', 'Casual', 'Doctor Coat', 'Police Uniform', 'Chef Apron', 'Yoga Gear']
         },
+        personalities: [
+            { label: 'Wise', emoji: '🧙', description: 'thoughtful, calm, knowing smile, gentle posture' },
+            { label: 'Brave', emoji: '🛡️', description: 'heroic, confident, strong stance, protector' },
+            { label: 'Funny', emoji: '🤡', description: 'making jokes, playful, laughing, animated' },
+            { label: 'Gentle', emoji: '🌿', description: 'patient, soft expression, kind-hearted, peaceful' },
+            { label: 'Cheerful', emoji: '😊', description: 'always smiling, warm presence, friendly wave' }
+        ],
         hasEyes: true
     },
     Dog: {
@@ -79,14 +92,21 @@ const CHARACTER_OPTIONS = {
                 { label: 'Black', value: '#1a1a1a' },
                 { label: 'Brown', value: '#5D4037' },
                 { label: 'White', value: '#F5F5F5' },
-                { label: 'Spotted', value: 'url(#spots)' } // Special handling ideally, simplified for now
+                { label: 'Spotted', value: 'url(#spots)' }
             ]
         },
-        skin: null, // Dogs don't pick skin
+        skin: null,
         clothes: {
             label: "Accessories",
             options: ['Red Collar', 'Blue Bandana', 'Superhero Cape', 'None', 'Bow Tie']
         },
+        personalities: [
+            { label: 'Playful', emoji: '🎾', description: 'wagging tail, zoomies, tongue out, happy energy' },
+            { label: 'Loyal', emoji: '🐕‍🦺', description: 'sitting by owner, protective, calm, sweet eyes' },
+            { label: 'Goofy', emoji: '🤪', description: 'tilted head, floppy ears, goofy accidental pose' },
+            { label: 'Sleepy', emoji: '💤', description: 'curled in a ball, cozy, peaceful snoring' },
+            { label: 'Hungry', emoji: '🦴', description: 'drooling slightly, begging look, paws up' }
+        ],
         hasEyes: true
     },
     Cat: {
@@ -105,6 +125,13 @@ const CHARACTER_OPTIONS = {
             label: "Accessories",
             options: ['Pink Collar', 'Bell', 'Bow', 'None']
         },
+        personalities: [
+            { label: 'Sassy', emoji: '💅', description: 'tail flicking, clever look, elegant pose, smart' },
+            { label: 'Lucky', emoji: '🍀', description: 'purring, happy, bringer of good vibes' },
+            { label: 'Hunter', emoji: '🧶', description: 'pouncing, focused eyes, ready for a yarn ball' },
+            { label: 'Royal', emoji: '👑', description: 'sitting on a pillow, aloof but cute, fancy' },
+            { label: 'Napping', emoji: '🌙', description: 'curled up, peaceful, dreaming of treats' }
+        ],
         hasEyes: true
     },
     Robot: {
@@ -118,22 +145,123 @@ const CHARACTER_OPTIONS = {
                 { label: 'Blue', value: '#2196F3' }
             ]
         },
-        skin: null, // No skin
+        skin: null,
         clothes: {
             label: "Style",
             options: ['Retro', 'Futuristic', 'Steampunk', 'Cute']
         },
-        hasEyes: true // LED eyes?
+        personalities: [
+            { label: 'Beeping', emoji: '🤖', description: 'blinking lights, happy mechanical sounds, friendly' },
+            { label: 'Helpful', emoji: '🔧', description: 'holding a tool, ready to work, reliable gear' },
+            { label: 'Glitchy', emoji: '⚡', description: 'chaotic but fun, sparks of joy, funny movements' },
+            { label: 'Smart', emoji: '🧠', description: 'recalculating, binary eyes, bright glowing ideas' },
+            { label: 'Friendly', emoji: '🤝', description: 'waving, metallic smile, soft robot heart' }
+        ],
+        hasEyes: true
+    },
+    Dinosaur: {
+        hair: {
+            label: "Scales Color",
+            options: [
+                { label: 'Green', value: '#4CAF50' },
+                { label: 'Blue', value: '#2196F3' },
+                { label: 'Purple', value: '#9C27B0' },
+                { label: 'Orange', value: '#FF9800' },
+                { label: 'Red', value: '#F44336' }
+            ]
+        },
+        skin: null,
+        clothes: {
+            label: "Accessories",
+            options: ['Bow Tie', 'Party Hat', 'Scientist Glasses', 'Explorer Vest', 'None']
+        },
+        personalities: [
+            { label: 'Stompy', emoji: '🦖', description: 'big steps, loud happy stomps, energetic' },
+            { label: 'Gentle', emoji: '🦕', description: 'long neck, peaceful, slow moving, kind eyes' },
+            { label: 'Hungry', emoji: '🍕', description: 'always looking for snacks, wide mouth, excited' },
+            { label: 'Roaring', emoji: '🔊', description: 'big friendly roars, expressive, vocal' },
+            { label: 'Sleepy', emoji: '💤', description: 'napping in the sun, cozy, relaxed' }
+        ],
+        hasEyes: true
+    },
+    Monster: {
+        hair: {
+            label: "Fur Color",
+            options: [
+                { label: 'Purple', value: '#9C27B0' },
+                { label: 'Blue', value: '#03A9F4' },
+                { label: 'Pink', value: '#E91E63' },
+                { label: 'Green', value: '#8BC34A' },
+                { label: 'Orange', value: '#FF5722' }
+            ]
+        },
+        skin: null,
+        clothes: {
+            label: "Accessories",
+            options: ['Scarf', 'Cape', 'Horn Ribbons', 'Tiny Sweater', 'None']
+        },
+        personalities: [
+            { label: 'Ticklish', emoji: '🤭', description: 'giggling, wiggling, happy monster' },
+            { label: 'Huggable', emoji: '🫂', description: 'soft, open arms, big friendly smile' },
+            { label: 'Silly', emoji: '🤪', description: 'funny faces, multiple eyes blinking, playful' },
+            { label: 'Shy', emoji: '🥺', description: 'hiding behind hands, peeking, bashful' },
+            { label: 'Helpful', emoji: '🤝', description: 'eager to help, many hands working, polite' }
+        ],
+        hasEyes: true
+    },
+    Hamster: {
+        hair: {
+            label: "Fur Color",
+            options: [
+                { label: 'Golden', value: '#FFC107' },
+                { label: 'Brown', value: '#795548' },
+                { label: 'White', value: '#F5F5F5' },
+                { label: 'Grey', value: '#9E9E9E' },
+                { label: 'Mixed', value: 'linear-gradient(to right, #795548, #FFC107)' }
+            ]
+        },
+        skin: null,
+        clothes: {
+            label: "Accessories",
+            options: ['Tiny Hat', 'Seed Bag', 'Mini Glasses', 'None']
+        },
+        personalities: [
+            { label: 'Zippy', emoji: '⚡', description: 'running fast, energetic, twitching nose' },
+            { label: 'Cheeky', emoji: '🐹', description: 'full cheeks, hoarding seeds, playful' },
+            { label: 'Curious', emoji: '🕵️', description: 'sniffing around, standing on hind legs, exploring' },
+            { label: 'Hungry', emoji: '🌻', description: 'always nibbling, excited for treats' },
+            { label: 'Sleepy', emoji: '💤', description: 'buried in woodchips, cozy, tiny snores' }
+        ],
+        hasEyes: true
+    },
+    'Sea Turtle': {
+        hair: {
+            label: "Shell Color",
+            options: [
+                { label: 'Green', value: '#2E7D32' },
+                { label: 'Teal', value: '#009688' },
+                { label: 'Brown', value: '#5D4037' },
+                { label: 'Teal Teal', value: '#4DB6AC' },
+                { label: 'Ocean Blue', value: '#0277BD' }
+            ]
+        },
+        skin: null,
+        clothes: {
+            label: "Accessories",
+            options: ['Bow', 'Shell Stickers', 'Goggles', 'Flower', 'None']
+        },
+        personalities: [
+            { label: 'Steady', emoji: '🐢', description: 'slow and steady, thoughtful, patient' },
+            { label: 'Wise', emoji: '🧙', description: 'old soul, kind eyes, sharing stories' },
+            { label: 'Adventurous', emoji: '🌊', description: 'swimming far, brave explorer, surfer vibes' },
+            { label: 'Shy', emoji: '🙈', description: 'hiding in shell, peeking out, quiet' },
+            { label: 'Happy', emoji: '😊', description: 'smiling, bobbing along, peaceful' }
+        ],
+        hasEyes: true
     }
-};
+}
 
-const PERSONALITY_OPTIONS = [
-    { label: 'Cheerful', emoji: '😊', description: 'always smiling, expressive eyes, energetic pose' },
-    { label: 'Brave', emoji: '🛡️', description: 'heroic, confident, standing tall, determined look' },
-    { label: 'Curious', emoji: '🕵️', description: 'inquisitive, wide-eyed, tilt of head, thoughtful expression' },
-    { label: 'Grumpy', emoji: '😤', description: 'stern, crossed arms, narrowed eyes, serious posture' },
-    { label: 'Shy', emoji: '🥺', description: 'timid, slight blush, looking away, humble pose' }
-];
+const DEFAULT_PERSONALITY = { label: 'Cheerful', emoji: '😊', description: 'always smiling, warm presence' };
 
 const EYE_COLORS = [
     { label: 'Brown', value: '#5D4037' },
@@ -149,38 +277,38 @@ const ART_STYLES = [
     {
         id: '3d-pixar',
         label: '3D Pixar Adventure',
-        prompt: 'A whimsical 3D Pixar-style [Subject]. Soft rim lighting, vibrant colors, clean 3D render, high-res children\'s book illustration.',
-        preview: 'assets/wireframe_style_selection_1768442064414.png' // Placeholder for now
+        prompt: 'Stylized 3D animated character illustration of [Subject] in a whimsical movie style. Soft rim lighting, vibrant cinematic colors, smooth toon-shaded surfaces, clean 3D render, high-res children\'s digital art, no photorealism, no realistic human skin.',
+        preview: '/assets/styles/3d-pixar.png'
     },
     {
         id: 'watercolor',
         label: 'Watercolor Dreams',
-        prompt: 'Whimsical watercolor illustration of [Subject]. Gentle washes of color, visible paper texture, soft edges, nostalgic atmosphere.',
-        preview: 'assets/wireframe_style_selection_1768442064414.png'
+        prompt: 'Artistic whimsical watercolor illustration of [Subject]. Gentle washes of paint, visible hand-painted brush strokes, heavy cold-press paper texture, soft bleeds, nostalgic storybook atmosphere, no photography, no realism.',
+        preview: '/assets/styles/watercolor.png'
     },
     {
         id: 'fantasy',
         label: 'Whimsical Fantasy',
-        prompt: 'Enchanting whimsical fantasy illustration of [Subject]. Dreamlike lighting, magical sparkles, rich deep colors, storybook aesthetic.',
-        preview: 'assets/wireframe_style_selection_1768442064414.png'
+        prompt: 'Enchanting whimsical digital painting of [Subject]. Painterly texture, dreamlike lighting, magical sparkles, rich deep colors, stylized character proportions, storybook aesthetic, no photorealistic features.',
+        preview: '/assets/styles/fantasy.png'
     },
     {
         id: 'pencil',
         label: 'Classic Pencil Sketch',
-        prompt: 'Hand-drawn pencil sketch illustration of [Subject] with expressive lines and soft graphite shading. Subtle hints of color, classic storybook feel.',
-        preview: 'assets/wireframe_style_selection_1768442064414.png'
+        prompt: 'Hand-drawn stylized pencil sketch illustration of [Subject]. Expressive dark graphite lines, soft charcoal shading, visible paper grain, subtle artistic color washes, classic sketchbook feel, no photographic qualities.',
+        preview: '/assets/styles/pencil.png'
     },
     {
         id: 'flat',
         label: 'Modern Flat Design',
-        prompt: 'Modern minimalist flat design illustration of [Subject]. Bold geometric shapes, clean lines, limited bright color palette, soft vector shadows.',
-        preview: 'assets/wireframe_style_selection_1768442064414.png'
+        prompt: 'Stylized minimalist vector-style flat design illustration of [Subject]. Bold geometric shapes, clean sharp lines, limited high-contrast color palette, simple 2D shapes, modern commercial illustration style, no 3D shading, no photorealism.',
+        preview: '/assets/styles/flat.png'
     },
     {
         id: 'collage',
         label: 'Cut Paper Collage',
-        prompt: 'Mixed media cut-paper collage illustration of [Subject]. Layered paper textures, visible edges, handmade aesthetic, vibrant craft colors.',
-        preview: 'assets/wireframe_style_selection_1768442064414.png'
+        prompt: 'Physical layered cut-paper collage illustration of [Subject]. Crafted from vibrant cardstock, sharp hand-cut paper edges, visible paper textures, 3D paper layers with physical shadows, handmade artistic style, no photorealism.',
+        preview: '/assets/styles/collage.png'
     }
 ];
 
@@ -210,9 +338,14 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
         }
     }, [userId]);
 
+    // Scroll to top on step change
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [step]);
+
     // State
     const [characters, setCharacters] = useState([
-        { id: 1, name: '', type: 'Kid', hair: 'Brown', eyes: 'Brown', skin: 'Medium', clothes: 'Red Shirt', personality: 'Cheerful' }
+        { id: 1, name: '', type: 'Kid', hair: 'Brown', eyes: 'Brown', skin: 'Medium', clothes: 'Red Shirt', personality: 'Silly' }
     ]);
     const [plot, setPlot] = useState('');
     const [settingAnchor, setSettingAnchor] = useState('');
@@ -272,13 +405,13 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
             const continueId = searchParams.get('continueFrom');
 
             // Check for Story Seed first (Nightly Ritual)
-            const seedStr = localStorage.getItem('LUMILIBRO_STORY_SEED');
+            const seedStr = localStorage.getItem('LUNALIBRO_STORY_SEED');
             if (seedStr) {
                 try {
                     const seed = JSON.parse(seedStr);
                     setPlot(`Continuing our adventure from the ${seed.title}! ${seed.promptSnippet}`);
                     // Optionally clear the seed so it doesn't pop up again unless a new session happens
-                    // localStorage.removeItem('LUMILIBRO_STORY_SEED'); 
+                    // localStorage.removeItem('LUNALIBRO_STORY_SEED'); 
                 } catch (e) {
                     console.error("Failed to parse story seed", e);
                 }
@@ -298,15 +431,17 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
     }, [searchParams, userId]);
 
     const addCharacter = () => {
-        setCharacters([...characters, {
+        const newCharacter = {
             id: Date.now(),
             name: '',
             type: 'Kid',
-            hair: 'Brown',
+            hair: CHARACTER_OPTIONS['Kid'].hair.options[0].label,
             eyes: 'Brown',
-            skin: 'Medium',
-            clothes: 'Adventure Gear'
-        }]);
+            skin: CHARACTER_OPTIONS['Kid'].skin.options[0].label,
+            clothes: CHARACTER_OPTIONS['Kid'].clothes.options[0],
+            personality: CHARACTER_OPTIONS['Kid'].personalities[0].label
+        };
+        setCharacters([...characters, newCharacter]);
     };
 
     const handleSaveCharacter = (char) => {
@@ -319,18 +454,54 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
             return;
         }
 
-        saveCharacter(char);
+        const currentPortrait = masterPortraits[char.id]?.selected;
+        const portraitsMap = { ...(char.portraits || {}) };
+
+        if (currentPortrait) {
+            portraitsMap[selectedStyle.id] = currentPortrait;
+        }
+
+        const charToSave = {
+            ...char,
+            portraits: portraitsMap,
+            // portraitUrl remains as a fallback for the UI or legacy items
+            portraitUrl: currentPortrait || char.portraitUrl || Object.values(portraitsMap)[0] || null
+        };
+
+        saveCharacter(charToSave);
         setSavedCharacters(getSavedCharacters());
         showModal("Magic Saved!", `${char.name} is now in your collection!`, "success");
     };
 
     const handleLoadCharacter = (savedChar) => {
-        // Replace the first character or add a new one? Let's add new default
-        if (characters[0].name === '') {
+        // Replace the first character or add a new one
+        if (characters.length === 1 && characters[0].name === '') {
             setCharacters([savedChar]);
         } else {
             setCharacters([...characters, savedChar]);
         }
+
+        // Restore portrait if it exists
+        // Restore portrait for the CURRENT style specifically
+        const styleMatch = savedChar.portraits?.[selectedStyle.id];
+
+        if (styleMatch) {
+            setMasterPortraits(prev => ({
+                ...prev,
+                [savedChar.id]: {
+                    selected: styleMatch,
+                    candidates: [styleMatch]
+                }
+            }));
+        } else {
+            // Clear current session portrait if it's from a different world
+            setMasterPortraits(prev => {
+                const next = { ...prev };
+                delete next[savedChar.id];
+                return next;
+            });
+        }
+
         setShowLoadModal(false);
     };
 
@@ -338,21 +509,23 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
         setCharacters(characters.map(c => {
             if (c.id !== id) return c;
 
+            let updates = { [field]: value };
+
             // If changing type, reset attributes to defaults for that type
             if (field === 'type') {
-                const defaults = CHARACTER_OPTIONS[value];
-                return {
-                    ...c,
-                    type: value,
-                    hair: defaults.hair?.options[0]?.label || '',
-                    eyes: 'Brown',
-                    skin: defaults.skin?.options[0]?.label || '',
-                    clothes: defaults.clothes?.options[0] || ''
-                };
+                updates.hair = CHARACTER_OPTIONS[value].hair.options[0].label;
+                if (CHARACTER_OPTIONS[value].skin) {
+                    updates.skin = CHARACTER_OPTIONS[value].skin.options[0].label;
+                } else {
+                    updates.skin = null; // Clear skin if new type doesn't have it
+                }
+                updates.clothes = CHARACTER_OPTIONS[value].clothes.options[0];
+                updates.personality = CHARACTER_OPTIONS[value].personalities[0].label;
             }
 
-            return { ...c, [field]: value };
+            return { ...c, ...updates };
         }));
+        Haptics.impact({ style: ImpactStyle.Light }).catch(() => { });
     };
 
     const removeCharacter = (id) => {
@@ -394,14 +567,15 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
         }
     };
 
-    const handleSelectPortrait = (charId, url) => {
+    const handleSelectPortrait = (charId, portrait) => {
         setMasterPortraits(prev => ({
             ...prev,
             [charId]: {
                 ...prev[charId],
-                selected: url
+                selected: portrait
             }
         }));
+        Haptics.impact({ style: ImpactStyle.Medium }).catch(() => { });
     };
 
     const handleGenerate = async () => {
@@ -411,8 +585,8 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
 
         const charSummary = characters.map(c => {
             const robotDetails = c.type === 'Robot' ? `, a mechanical being with a metallic silver body, visible brass gears, and glowing blue LED eyes` : '';
-            const speciesDesc = c.type === 'Kid' ? 'human child' : c.type === 'Adult' ? 'human adult' : c.type;
-            const personality = PERSONALITY_OPTIONS.find(p => p.label === c.personality) || PERSONALITY_OPTIONS[0];
+            const speciesDesc = c.type === 'Kid' ? 'stylized human child' : c.type === 'Adult' ? 'stylized human adult' : c.type;
+            const personality = CHARACTER_OPTIONS[c.type].personalities.find(p => p.label === c.personality) || DEFAULT_PERSONALITY;
             return `[CHARACTER INFO NAME: ${c.name} | SPECIES: ${c.type} | PERSONALITY: ${c.personality} (${personality.description}) | MANDATORY VISUAL DESCRIPTION: A cute ${speciesDesc}${robotDetails} with ${c.hair} hair/color, ${c.eyes} eyes, ${c.skin} skin tone, wearing ${c.clothes}]`;
         }).join('\n');
 
@@ -429,7 +603,15 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
             `;
         }
 
-        const systemPrompt = `You are a world-class children's book author and illustrator. Write a ${readingTime} minute story for a child (Age: ${ageLevel}).
+        const systemPrompt = `You are a world-class, award-winning children's book author and magical illustrator. 
+            YOUR MISSION: Create a ${readingTime} minute story for a child (Age: ${ageLevel}) that is CAPTIVATING, JOYFUL, and MAGICAL.
+            
+            STORY STRUCTURE RULES:
+            - BEGINNING: Set the scene and introduce the characters with warmth. Establish a sense of wonder.
+            - MIDDLE: Introduce a small obstacle, a mystery, or a playful challenge that the characters must solve together.
+            - END: A heartwarming and satisfying resolution that leaves the child feeling happy and inspired.
+            - PACING: Do not be "matter of fact". Use descriptive, sensory language (sights, sounds, feelings).
+            - TEXT LENGTH: Each page should have 3-5 RICH sentences. It is better to have more descriptive text than short, dry facts. Use natural, engaging Spanish at the ${spanishLevel} level.
 
             ${charSummary}
 
@@ -443,41 +625,29 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
             SCHEMA:
             {
               "title": "Title",
-              "coverImagePrompt": "Description of cover in English",
+              "coverImagePrompt": "A stunning, high-interest cover illustration that would make a child gasp with joy. [Style Description]",
               "pages": [
                 {
-                  "spanishText": "Story text in natural, rich Spanish",
+                  "spanishText": "Story text in natural, rich, and engaging Spanish",
                   "englishText": "English translation",
-                  "imagePrompt": "Detailed scene description in English"
+                  "imagePrompt": "A truly magical and atmospheric visual description. Focus on expressions of wonder, beautiful lighting, and whimsical details that capture a child's imagination."
                 }
               ],
               "vocabulary": [{"spanish": "word", "english": "translation"}]
             }
 
-            STORYTELLER DIRECTION:
-            - This is a feature for parents to connect with children at bedtime. 
-            - Use beautiful, rich, and descriptive language (Master Storyteller mode). 
-            - Use ${spanishLevel} focus words in the 'vocabulary' section, but keep the story text high-quality and natural.
-            - Provide BOTH "spanishText" and "englishText" for every page.
+            CRITICAL CHARACTER SEPARATION & VISUAL MAGIC:
+            When creating "imagePrompt", you MUST describe EVERY character present using their full "MANDATORY VISUAL DESCRIPTION". 
+            - NO DRY PROMPTS: Instead of "A turtle in the water", use "A cute Sea Turtle with a vibrant green shell and sparkly stickers swimming through a glowing, crystal-blue magical tidepool, his face filled with pure joy."
+            - EXPRESSIONS: Always describe the characters' emotions (e.g., "wide eyes filled with wonder", "a mischievous giggle", "a warm, gentle smile").
+            - DYNAMICS: Characters should be doing something magical or active, not just standing there.
+            - FORMAT: "A [Visual Description] named [Name] and a [Visual Description] named [Name]..."
 
-            VISUAL ART STYLE (MANDATORY):
-            - All images MUST follow this style: ${selectedStyle.prompt.replace('[Subject]', 'the scene')}
-            - Ensure high visual fidelity and consistent lighting across all pages.
-
-            PHASE 3: DIRECTOR'S MODE (SCREENPLAY PARSING):
-            1. SETTING ANCHOR: Establish a clear location in Page 1 (e.g., "The Blue Moon Attic"). Refer to this specific setting in every subsequent page to maintain environmental consistency.
-            2. CAMERA COMPOSITION: Vary the shots to create a dynamic book (WIDE established, MEDIUM acting, CLOSE-UP emotional).
-            3. IDENTITY MAPPING: In 'imagePrompt', use explicit character names as tags. 
-               - Format: "[SCENE DESCRIPTION]. Characters present: [NAME 1], [NAME 2]."
-               - Example: "A sunny day in the park. Characters present: Leo, Luna."
-            4. SCENE DESCRIPTION FORMULA:
-               "${selectedStyle.prompt.replace('[Subject]', '[SETTING NAME + SPECIFIC ACTION]')}. Camera: [WIDE/MEDIUM/CLOSE-UP]. Lighting: [TIME OF DAY/ATMOSPHERE]. Characters: [FULL VISUAL DESCRIPTION + POSE BASED ON PERSONALITY]."
-
-            CRITICAL CHARACTER CONSISTENCY RULES:
-            1. SPECIES LOCK (EXTREME): A character's species NEVER changes. If ${characters[0].name} is a Dog, they are ALWAYS a Dog.
-            2. NO SHAPE-SHIFTING: Do NOT change the characters' species to fit the theme.
+            PHASE 3: ILLUSTRATOR'S DIRECTION:
+            1. SETTING ANCHOR: Refer to the specific location details (e.g., "sparkling dust in the attic", "glowing coral in the sea") consistently in every page.
+            2. COMPOSITION: Use "Cinematic lighting", "Soft glow", "Vibrant colors", and "Perspective: Wide/Medium/Close-up" to guide the art.
             3. ROSTER: Use ONLY the provided characters: ${characters.map(c => c.name).join(', ')}.
-            4. CONSISTENCY OVER MAGIC: If the style is 'Classic Pencil Sketch', do not suddenly add 3D elements.
+            4. STYLE ADHERENCE: All characters, especially humans, MUST strictly follow the ${selectedStyle.label} aesthetic. Never use photorealistic features for humans.
 
             VISUAL POLISH:
             - NO text, letters, or watermarks in the image prompts.
@@ -524,7 +694,7 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                     else if (currentModel === 'getimg') coverImage = await generateGetImgImage(parsedStoryData.coverImagePrompt);
                     else if (currentModel === 'pixeldojo') coverImage = await generatePixelDojoImage(parsedStoryData.coverImagePrompt);
                     else if (currentModel === 'leonardo') {
-                        const refs = Object.values(masterPortraits).map(p => p.selected).filter(url => !!url);
+                        const refs = Object.values(masterPortraits).map(p => p.selected).filter(ref => !!ref?.id);
                         coverImage = await generateLeonardoImage(parsedStoryData.coverImagePrompt, refs);
                     }
                 } catch (e) { console.error("Cover failed", e); }
@@ -553,14 +723,22 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                         else if (currentModel === 'pixeldojo') pageImage = await generatePixelDojoImage(page.imagePrompt);
                         else if (currentModel === 'leonardo') {
                             // PHASE 4: Presence Detection
-                            // Only include references for characters actually mentioned in the prompt
-                            const refs = characters
-                                .filter(char => page.imagePrompt.toLowerCase().includes(char.name.toLowerCase()))
-                                .map(char => masterPortraits[char.id]?.selected)
-                                .filter(url => !!url);
+                            // Only include references for characters actually mentioned in the prompt.
+                            // We sort them by their appearance in the prompt to pick the focal character first.
+                            const focusedChars = characters
+                                .map(char => ({
+                                    char,
+                                    index: page.imagePrompt.toLowerCase().indexOf(char.name.toLowerCase())
+                                }))
+                                .filter(item => item.index !== -1)
+                                .sort((a, b) => a.index - b.index);
+
+                            const refs = focusedChars
+                                .map(item => masterPortraits[item.char.id]?.selected)
+                                .filter(ref => !!ref?.id);
 
                             // If no names found, fallback to all selected portraits
-                            const finalRefs = refs.length > 0 ? refs : Object.values(masterPortraits).map(p => p.selected).filter(url => !!url);
+                            const finalRefs = refs.length > 0 ? refs : Object.values(masterPortraits).map(p => p.selected).filter(ref => !!ref?.id);
 
                             pageImage = await generateLeonardoImage(page.imagePrompt, finalRefs);
                         }
@@ -679,19 +857,24 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                     border-color: #8B5CF6;
                     box-shadow: 0 15px 30px rgba(139, 92, 246, 0.15);
                 }
-                .hero-summon-btn {
+                .hero-invite-btn {
                     margin-top: 0.8rem;
                     background: #F5F3FF;
                     color: #8B5CF6;
                     border: none;
+                    min-height: 44px;
                     padding: 0.5rem 1rem;
                     border-radius: 12px;
                     font-weight: 800;
-                    font-size: 0.8rem;
+                    font-size: 0.9rem;
                     width: 100%;
                     transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.4rem;
                 }
-                .hero-mini-card:hover .hero-summon-btn {
+                .hero-mini-card:hover .hero-invite-btn {
                     background: #8B5CF6;
                     color: white;
                 }
@@ -789,8 +972,26 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                     }
                     .appearance-subgrid {
                         grid-template-columns: 1fr !important;
-                        padding: 1.2rem !important;
+                        padding: 1.5rem !important;
+                        gap: 2.5rem !important;
+                        background: transparent !important;
+                    }
+                    .attribute-section-card {
+                        background: white;
+                        border-radius: 20px;
+                        padding: 1.2rem;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+                        border: 1px solid #f1f5f9;
+                    }
+                    .attribute-row {
                         gap: 1.5rem !important;
+                    }
+                    .hero-invite-btn {
+                        min-height: 48px;
+                    }
+                    .personality-grid button {
+                        min-height: 54px;
+                        font-size: 1rem !important;
                     }
                     .portrait-grid {
                         grid-template-columns: 1fr !important;
@@ -896,7 +1097,10 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                                             key={style.id}
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
-                                            onClick={() => setSelectedStyle(style)}
+                                            onClick={() => {
+                                                setSelectedStyle(style);
+                                                Haptics.impact({ style: ImpactStyle.Medium }).catch(() => { });
+                                            }}
                                             style={{
                                                 background: 'white',
                                                 borderRadius: '24px',
@@ -912,11 +1116,14 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                                                 transition: 'all 0.2s ease'
                                             }}
                                         >
-                                            <div style={{ aspectRatio: '1/1', borderRadius: '15px', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                {/* In a real app we'd use style.preview, but using simple representation for now */}
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <Palette size={32} color={selectedStyle.id === style.id ? '#8B5CF6' : '#CBD5E1'} />
-                                                </div>
+                                            <div style={{ aspectRatio: '1/1', borderRadius: '15px', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                                {style.preview ? (
+                                                    <img src={style.preview} alt={style.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <div style={{ textAlign: 'center' }}>
+                                                        <Palette size={32} color={selectedStyle.id === style.id ? '#8B5CF6' : '#CBD5E1'} />
+                                                    </div>
+                                                )}
                                             </div>
                                             <div style={{ fontWeight: '800', fontSize: '1rem', color: selectedStyle.id === style.id ? '#8B5CF6' : '#1F2937', textAlign: 'center' }}>
                                                 {style.label}
@@ -938,14 +1145,14 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                                 <div style={{ marginBottom: '2.5rem' }}>
                                     <h2 style={{ fontSize: '2.2rem', fontWeight: '900', marginBottom: '0.6rem', letterSpacing: '-0.02em' }}>2. Assemble Your <span style={{ color: '#8B5CF6' }}>Cast</span> ⭐</h2>
-                                    <p style={{ color: '#64748B', fontSize: '1.1rem', fontWeight: '500' }}>Invite your favorites or build new friends for this story!</p>
+                                    <p style={{ color: '#64748B', fontSize: '1.1rem', fontWeight: '500' }}>Add your favorites or build new friends for this story!</p>
                                 </div>
 
                                 {savedCharacters.length > 0 && (
                                     <div style={{ marginBottom: '3.5rem' }}>
                                         <div style={{ fontSize: '0.85rem', fontWeight: '900', color: '#1E293B', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                                             <div style={{ padding: '6px', background: '#F59E0B', color: 'white', borderRadius: '8px' }}><Sparkles size={16} /></div>
-                                            The Hall of Heroes
+                                            Saved Characters
                                         </div>
                                         <div className="hall-of-heroes">
                                             {savedCharacters.map(sc => (
@@ -955,16 +1162,35 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                                                     className="hero-mini-card"
                                                     onClick={() => {
                                                         handleLoadCharacter(sc);
-                                                        showModal("Invited!", `${sc.name} joined the cast!`, "success");
+                                                        showModal("Added!", `${sc.name} joined the cast!`, "success");
                                                     }}
                                                 >
-                                                    <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #F5F3FF, #EDE9FE)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B5CF6', margin: '0 auto 1rem', border: '2px solid white', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.1)' }}>
-                                                        <User size={30} />
+                                                    <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #F5F3FF, #EDE9FE)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B5CF6', margin: '0 auto 1rem', border: '2px solid white', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.1)', overflow: 'hidden' }}>
+                                                        {(() => {
+                                                            const displayUrl = sc.portraits?.[selectedStyle.id] || sc.portraitUrl;
+                                                            return displayUrl ? (
+                                                                <img src={displayUrl} alt={sc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                            ) : (
+                                                                <User size={30} />
+                                                            );
+                                                        })()}
                                                     </div>
                                                     <div style={{ fontWeight: '800', fontSize: '0.95rem', color: '#1E293B', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sc.name}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: '600', marginBottom: '1rem' }}>{sc.type}</div>
-                                                    <button className="hero-summon-btn">
-                                                        Summon
+                                                    <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: '600', marginBottom: '0.5rem' }}>{sc.type}</div>
+
+                                                    {/* Style Indicator */}
+                                                    {sc.portraits?.[selectedStyle.id] ? (
+                                                        <div style={{ fontSize: '0.65rem', color: '#10B981', background: '#ECFDF5', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '0.8rem', fontWeight: '800' }}>
+                                                            <Check size={10} style={{ marginRight: '2px' }} /> World Match
+                                                        </div>
+                                                    ) : sc.portraits && Object.keys(sc.portraits).length > 0 ? (
+                                                        <div style={{ fontSize: '0.65rem', color: '#F59E0B', background: '#FFFBEB', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '0.8rem', fontWeight: '800' }}>
+                                                            Another World
+                                                        </div>
+                                                    ) : <div style={{ marginBottom: '0.8rem', height: '1.2rem' }} />}
+
+                                                    <button className="hero-invite-btn">
+                                                        <UserPlus size={16} /> +Add
                                                     </button>
                                                 </motion.div>
                                             ))}
@@ -1025,7 +1251,8 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                                                         value={char.name}
                                                         onChange={(e) => updateCharacter(char.id, 'name', e.target.value)}
                                                         placeholder="e.g. Luna the Brave"
-                                                        style={{ border: '2px solid #F1F5F9', padding: '1rem', borderRadius: '18px', width: '100%', fontSize: '1rem', fontWeight: '600', outline: 'none', transition: 'border-color 0.2s' }}
+                                                        inputMode="text"
+                                                        style={{ border: '2px solid #F1F5F9', padding: '1.2rem', borderRadius: '18px', width: '100%', fontSize: '1.1rem', fontWeight: '600', outline: 'none', transition: 'border-color 0.2s', minHeight: '54px' }}
                                                         onFocus={(e) => e.target.style.borderColor = '#8B5CF6'}
                                                         onBlur={(e) => e.target.style.borderColor = '#F1F5F9'}
                                                     />
@@ -1034,7 +1261,7 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                                                         <PremiumSelect
                                                             label="Species / Type"
                                                             value={char.type}
-                                                            options={['Kid', 'Adult', 'Dog', 'Cat', 'Robot']}
+                                                            options={['Kid', 'Adult', 'Dog', 'Cat', 'Robot', 'Dinosaur', 'Monster', 'Hamster', 'Sea Turtle']}
                                                             onChange={(val) => updateCharacter(char.id, 'type', val)}
                                                             icon={Ghost}
                                                         />
@@ -1045,14 +1272,14 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                                                 <div className="attribute-row">
                                                     <label className="attribute-label"><Heart size={14} /> Personality & Vibe</label>
                                                     <div className="personality-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem' }}>
-                                                        {PERSONALITY_OPTIONS.map((p) => (
+                                                        {CHARACTER_OPTIONS[char.type].personalities.map((p) => (
                                                             <button
                                                                 key={p.label}
                                                                 onClick={() => updateCharacter(char.id, 'personality', p.label)}
                                                                 style={{
                                                                     padding: '0.8rem', borderRadius: '15px', border: '2px solid',
                                                                     borderColor: char.personality === p.label ? '#8B5CF6' : '#F1F5F9',
-                                                                    background: char.personality === p.label ? '#F5F3FF' : 'white',
+                                                                    backgroundColor: char.personality === p.label ? '#F5F3FF' : 'white',
                                                                     color: char.personality === p.label ? '#8B5CF6' : '#64748B',
                                                                     cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left',
                                                                     display: 'flex', alignItems: 'center', gap: '0.6rem'
@@ -1067,97 +1294,125 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
 
                                                 {/* Appearance Styling */}
                                                 <div className="attribute-row" style={{ gridColumn: 'span 2' }}>
-                                                    <div className="appearance-subgrid" style={{ background: '#F8FAFC', borderRadius: '25px', padding: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem' }}>
+                                                    <div className="appearance-subgrid" style={{ padding: '0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
 
                                                         {/* Dynamic Attributes based on Type */}
                                                         {CHARACTER_OPTIONS[char.type]?.hair && (
-                                                            <div>
-                                                                <label className="attribute-label"><Palette size={14} /> {CHARACTER_OPTIONS[char.type].hair.label}</label>
-                                                                <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', marginTop: '0.8rem' }}>
+                                                            <div className="attribute-section-card">
+                                                                <label className="attribute-label" style={{ marginBottom: '1rem' }}><Palette size={14} /> {CHARACTER_OPTIONS[char.type].hair.label}</label>
+                                                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                                                                     {CHARACTER_OPTIONS[char.type].hair.options.map((opt, i) => (
-                                                                        <div
+                                                                        <motion.div
                                                                             key={i}
                                                                             onClick={() => updateCharacter(char.id, 'hair', opt.label)}
                                                                             style={{
-                                                                                cursor: 'pointer', width: '2.8rem', height: '2.8rem', borderRadius: '50%',
-                                                                                background: opt.value,
-                                                                                border: char.hair === opt.label ? '4px solid #8B5CF6' : '3px solid white',
-                                                                                boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s'
+                                                                                cursor: 'pointer', width: '3rem', height: '3rem', borderRadius: '50%',
+                                                                                backgroundColor: opt.value,
+                                                                                border: char.hair === opt.label ? '3px solid #8B5CF6' : '3px solid #f1f5f9',
+                                                                                boxShadow: char.hair === opt.label ? '0 0 0 3px rgba(139, 92, 246, 0.2)' : 'none',
+                                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
+                                                                                position: 'relative'
                                                                             }}
-                                                                            whileHover={{ scale: 1.1 }}
+                                                                            whileHover={{ scale: 1.1, borderColor: '#8B5CF6' }}
+                                                                            whileTap={{ scale: 0.95 }}
                                                                             title={opt.label}
                                                                         >
-                                                                            {char.hair === opt.label && <Check size={16} color="white" strokeWidth={4} style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }} />}
-                                                                        </div>
+                                                                            {char.hair === opt.label && (
+                                                                                <div style={{ background: '#8B5CF6', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: '-5px', right: '-5px', border: '2px solid white' }}>
+                                                                                    <Check size={12} color="white" strokeWidth={4} />
+                                                                                </div>
+                                                                            )}
+                                                                        </motion.div>
                                                                     ))}
                                                                 </div>
                                                             </div>
                                                         )}
 
                                                         {CHARACTER_OPTIONS[char.type]?.hasEyes && (
-                                                            <div>
-                                                                <label className="attribute-label"><Zap size={14} /> Eye Color</label>
-                                                                <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', marginTop: '0.8rem' }}>
+                                                            <div className="attribute-section-card">
+                                                                <label className="attribute-label" style={{ marginBottom: '1rem' }}><Zap size={14} /> Eye Color</label>
+                                                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                                                                     {EYE_COLORS.map((opt, i) => (
-                                                                        <div
+                                                                        <motion.div
                                                                             key={i}
                                                                             onClick={() => updateCharacter(char.id, 'eyes', opt.label)}
                                                                             style={{
-                                                                                cursor: 'pointer', width: '2.4rem', height: '2.4rem', borderRadius: '50%',
-                                                                                background: opt.value,
-                                                                                border: char.eyes === opt.label ? '4px solid #8B5CF6' : '3px solid white',
-                                                                                boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                                                                                position: 'relative'
+                                                                                cursor: 'pointer', width: '2.8rem', height: '2.8rem', borderRadius: '50%',
+                                                                                backgroundColor: opt.value,
+                                                                                border: char.eyes === opt.label ? '3px solid #8B5CF6' : '3px solid #f1f5f9',
+                                                                                boxShadow: char.eyes === opt.label ? '0 0 0 3px rgba(139, 92, 246, 0.2)' : 'none',
+                                                                                position: 'relative',
+                                                                                transition: 'all 0.2s'
                                                                             }}
+                                                                            whileHover={{ scale: 1.1, borderColor: '#8B5CF6' }}
+                                                                            whileTap={{ scale: 0.95 }}
                                                                             title={opt.label}
                                                                         >
                                                                             <div style={{ position: 'absolute', top: '30%', left: '30%', width: '40%', height: '40%', background: 'black', borderRadius: '50%' }}></div>
-                                                                        </div>
+                                                                            {char.eyes === opt.label && (
+                                                                                <div style={{ background: '#8B5CF6', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: '-5px', right: '-5px', border: '2px solid white', zIndex: 2 }}>
+                                                                                    <Check size={10} color="white" strokeWidth={4} />
+                                                                                </div>
+                                                                            )}
+                                                                        </motion.div>
                                                                     ))}
                                                                 </div>
                                                             </div>
                                                         )}
 
                                                         {CHARACTER_OPTIONS[char.type]?.skin && (
-                                                            <div>
-                                                                <label className="attribute-label"><Palette size={14} /> {CHARACTER_OPTIONS[char.type].skin.label}</label>
-                                                                <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', marginTop: '0.8rem' }}>
+                                                            <div className="attribute-section-card">
+                                                                <label className="attribute-label" style={{ marginBottom: '1rem' }}><Palette size={14} /> {CHARACTER_OPTIONS[char.type].skin.label}</label>
+                                                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                                                                     {CHARACTER_OPTIONS[char.type].skin.options.map((opt, i) => (
-                                                                        <div
+                                                                        <motion.div
                                                                             key={i}
                                                                             onClick={() => updateCharacter(char.id, 'skin', opt.label)}
                                                                             style={{
-                                                                                cursor: 'pointer', width: '2.8rem', height: '2.8rem', borderRadius: '50%',
-                                                                                background: opt.value,
-                                                                                border: char.skin === opt.label ? '4px solid #8B5CF6' : '3px solid white',
-                                                                                boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                                                                                cursor: 'pointer', width: '3rem', height: '3rem', borderRadius: '50%',
+                                                                                backgroundColor: opt.value,
+                                                                                border: char.skin === opt.label ? '3px solid #8B5CF6' : '3px solid #f1f5f9',
+                                                                                boxShadow: char.skin === opt.label ? '0 0 0 3px rgba(139, 92, 246, 0.2)' : 'none',
+                                                                                transition: 'all 0.2s',
+                                                                                position: 'relative'
                                                                             }}
+                                                                            whileHover={{ scale: 1.1, borderColor: '#8B5CF6' }}
+                                                                            whileTap={{ scale: 0.95 }}
                                                                             title={opt.label}
-                                                                        />
+                                                                        >
+                                                                            {char.skin === opt.label && (
+                                                                                <div style={{ background: '#8B5CF6', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: '-5px', right: '-5px', border: '2px solid white' }}>
+                                                                                    <Check size={12} color="white" strokeWidth={4} />
+                                                                                </div>
+                                                                            )}
+                                                                        </motion.div>
                                                                     ))}
                                                                 </div>
                                                             </div>
                                                         )}
 
                                                         {CHARACTER_OPTIONS[char.type]?.clothes && (
-                                                            <div style={{ gridColumn: 'span 2' }}>
-                                                                <label className="attribute-label"><Palette size={14} /> {CHARACTER_OPTIONS[char.type].clothes.label}</label>
-                                                                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.8rem' }}>
+                                                            <div className="attribute-section-card" style={{ gridColumn: 'span 2' }}>
+                                                                <label className="attribute-label" style={{ marginBottom: '1rem' }}><Palette size={14} /> {CHARACTER_OPTIONS[char.type].clothes.label}</label>
+                                                                <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                                                                     {CHARACTER_OPTIONS[char.type].clothes.options.map((opt, i) => (
-                                                                        <button
+                                                                        <motion.button
                                                                             key={i}
                                                                             onClick={() => updateCharacter(char.id, 'clothes', opt)}
+                                                                            whileHover={{ scale: 1.02, backgroundColor: char.clothes === opt ? '#7C3AED' : '#f1f5f9' }}
+                                                                            whileTap={{ scale: 0.98 }}
                                                                             style={{
-                                                                                padding: '0.6rem 1.2rem', borderRadius: '15px',
-                                                                                background: char.clothes === opt ? '#8B5CF6' : 'white',
+                                                                                padding: '0.8rem 1.4rem', borderRadius: '15px',
+                                                                                backgroundColor: char.clothes === opt ? '#8B5CF6' : 'white',
                                                                                 color: char.clothes === opt ? 'white' : '#475569',
                                                                                 border: char.clothes === opt ? '2px solid #8B5CF6' : '2px solid #F1F5F9',
-                                                                                fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s'
+                                                                                fontSize: '0.95rem', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s',
+                                                                                minHeight: '44px',
+                                                                                boxShadow: char.clothes === opt ? '0 4px 10px rgba(139, 92, 246, 0.2)' : 'none'
                                                                             }}
                                                                         >
                                                                             {opt}
-                                                                        </button>
+                                                                        </motion.button>
                                                                     ))}
                                                                 </div>
                                                             </div>
@@ -1208,8 +1463,8 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
 
                                             <div className="portrait-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                                                 {(masterPortraits[char.id]?.candidates || [1, 2, 3]).map((item, i) => {
-                                                    const isCandidate = typeof item === 'string';
-                                                    const isSelected = masterPortraits[char.id]?.selected === item;
+                                                    const isCandidate = typeof item === 'object' && item !== null && item.url;
+                                                    const isSelected = masterPortraits[char.id]?.selected?.id === item.id;
 
                                                     return (
                                                         <motion.div
@@ -1233,7 +1488,7 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                                                             {isCandidate ? (
                                                                 <>
                                                                     <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden' }}>
-                                                                        <img src={item} alt="Candidate" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                        <img src={item.url} alt="Candidate" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                                     </div>
                                                                     {isSelected && (
                                                                         <div style={{
@@ -1458,11 +1713,11 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </div>
-            </motion.div>
+                </div >
+            </motion.div >
 
             {/* GENERATION OVERLAY */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {isGenerating && (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -1532,11 +1787,12 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                             Our AI artists are working hard. You can see the pages appearing as they finish!
                         </p>
                     </motion.div>
-                )}
-            </AnimatePresence>
+                )
+                }
+            </AnimatePresence >
 
             {/* Storage Warning Modal */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {storageWarning && (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -1641,16 +1897,16 @@ export default function StorybookCreator({ ageLevel, spanishLevel }) {
                         </motion.div>
                     </motion.div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence >
 
             {/* Custom Notification Modal */}
-            <CustomModal
+            < CustomModal
                 isOpen={modalConfig.isOpen}
                 onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
                 title={modalConfig.title}
                 message={modalConfig.message}
                 type={modalConfig.type}
             />
-        </div>
+        </div >
     );
 }

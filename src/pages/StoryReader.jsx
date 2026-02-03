@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Volume2, VolumeX, Eye, EyeOff, Maximize2, Minimize2, Sparkles, Wand2, Home, X, Loader, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Volume2, VolumeX, Eye, EyeOff, Maximize2, Minimize2, Sparkles, Wand2, Home, X, Loader, Info, Share2 as ShareIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Share } from '@capacitor/share';
+import { ScreenOrientation } from '@capacitor/screen-orientation';
 
-import { generateOpenAISpeechWithTimestamps } from '../lib/openai_tts';
+import { generateSpeechWithTimestamps, generateSpeech } from '../lib/tts';
 import { getStorybookById } from '../lib/storybook_storage';
 import { generateStoryPDF } from '../lib/pdf_generator';
 import { getCachedAudio, setCachedAudio } from '../lib/audio_cache';
@@ -66,6 +69,17 @@ export default function StoryReader() {
             }
         }
         fetchStory();
+
+        // Orientation Lock (Native only)
+        try {
+            ScreenOrientation.lock({ orientation: 'landscape' }).catch(() => { });
+        } catch (e) { }
+
+        return () => {
+            try {
+                ScreenOrientation.unlock().catch(() => { });
+            } catch (e) { }
+        };
     }, [id, story, userId]);
 
     // Fallback if still no story
@@ -100,7 +114,8 @@ export default function StoryReader() {
                     console.log(`Pre-fetching audio for page ${nextPageIdx + 1}...`);
 
                     try {
-                        const result = await generateOpenAISpeechWithTimestamps(nextText, 'nova', 0.9);
+                        const voice = readerLanguage === 'English' ? 'en-US-AnaNeural' : 'es-MX-MarinaNeural';
+                        const result = await generateSpeechWithTimestamps(nextText, voice, 0.9);
 
                         setCachedAudio(nextText, { audioUrl: result.audioUrl, alignment: result.alignment });
                         console.log(`Pre-fetch complete for page ${nextPageIdx + 1}`);
@@ -160,8 +175,9 @@ export default function StoryReader() {
                 audioUrl = cached.audioUrl;
                 alignData = cached.alignment;
             } else {
-                console.log("Generating audio with OpenAI TTS...");
-                const result = await generateOpenAISpeechWithTimestamps(text, 'nova', 0.9);
+                console.log("Generating audio with Azure TTS...");
+                const voice = readerLanguage === 'English' ? 'en-US-AnaNeural' : 'es-MX-MarinaNeural';
+                const result = await generateSpeechWithTimestamps(text, voice, 0.9);
                 audioUrl = result.audioUrl;
                 alignData = result.alignment;
 
@@ -240,8 +256,9 @@ export default function StoryReader() {
             }
 
             try {
-                // Safely fallback to OpenAI if the sophisticated method failed
-                const url = await generateOpenAISpeech(text, 'nova', 0.9);
+                // Safely fallback to Azure (simple) if the sophisticated method failed
+                const voice = readerLanguage === 'English' ? 'en-US-AnaNeural' : 'es-MX-MarinaNeural';
+                const url = await generateSpeech(text, voice, 0.9);
                 if (requestId !== activeRequestId.current) return;
 
                 const audio = new Audio(url);
@@ -375,8 +392,24 @@ export default function StoryReader() {
     const handleDownloadPDF = async () => {
         if (!story) return;
 
-        // If it's ready, trigger the final trusted click
+        // If it's ready, trigger
         if (readyPDF) {
+            // Native Sharing check
+            try {
+                const canShare = await Share.canShare();
+                if (canShare.value) {
+                    await Share.share({
+                        title: story.title || 'My Magic Story',
+                        text: `Read my new story: ${story.title}`,
+                        url: readyPDF.blobUrl,
+                        dialogTitle: 'Share Story'
+                    });
+                    return;
+                }
+            } catch (err) {
+                console.warn('Native sharing unavailable');
+            }
+
             readyPDF.trigger();
             return;
         }
@@ -386,6 +419,21 @@ export default function StoryReader() {
             const result = await generateStoryPDF(story);
             if (result) {
                 setReadyPDF(result);
+
+                // Automatic Native Share after generation
+                try {
+                    const canShare = await Share.canShare();
+                    if (canShare.value) {
+                        await Share.share({
+                            title: story.title || 'My Magic Story',
+                            text: `Read my new story: ${story.title}`,
+                            url: result.blobUrl,
+                            dialogTitle: 'Share Story'
+                        });
+                    }
+                } catch (err) {
+                    console.warn('Auto-share failed');
+                }
             }
         } catch (e) {
             console.error("StoryReader PDF Generation Failed:", e);
@@ -549,7 +597,16 @@ export default function StoryReader() {
             )}
 
             {/* Header / Controls */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20, padding: '1.5rem', display: 'flex', justifyContent: 'space-between', pointerEvents: 'none' }}>
+            <div style={{
+                position: 'absolute',
+                top: `calc(1.5rem + env(safe-area-inset-top))`,
+                left: `calc(1rem + env(safe-area-inset-left))`,
+                right: `calc(1rem + env(safe-area-inset-right))`,
+                zIndex: 20,
+                display: 'flex',
+                justifyContent: 'space-between',
+                pointerEvents: 'none'
+            }}>
                 <div style={{ pointerEvents: 'auto' }}>
                     <button onClick={() => navigate('/bookshelf')} style={{ color: 'white', background: 'rgba(255,255,255,0.1)', padding: '0.6rem 1.2rem', borderRadius: '50px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold', backdropFilter: 'blur(5px)' }}>
                         <X size={20} /> Exit
@@ -737,7 +794,7 @@ export default function StoryReader() {
                                                 ) : readyPDF ? (
                                                     <>Download Ready! <Sparkles size={24} /></>
                                                 ) : (
-                                                    <>Print Story PDF <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></>
+                                                    <>Share Story PDF <ShareIcon size={24} /></>
                                                 )}
                                             </button>
                                             <button onClick={() => navigate('/bookshelf')} style={{ padding: '1rem 2rem', borderRadius: '15px', background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', fontSize: '1.1rem' }}>

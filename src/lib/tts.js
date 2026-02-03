@@ -2,16 +2,25 @@ import { supabase } from './supabase';
 
 /**
  * PRODUCTION SECURITY: 
- * OpenAI TTS keys are kept server-side.
+ * TTS API keys are kept server-side in Supabase Edge Functions.
+ * Supports Azure TTS voices for Spanish language learning.
  */
 
-export const generateOpenAISpeech = async (text, voice = 'nova', speed = 1.0) => {
+/**
+ * Available Azure Spanish Voices:
+ * - es-MX-DaliaNeural (Female, warm and friendly)
+ * - es-MX-JorgeNeural (Male, clear and professional)
+ * - es-MX-MarinaNeural (Female, young and energetic)
+ * - es-ES-ElviraNeural (Female, Spanish from Spain)
+ * - es-ES-AlvaroNeural (Male, Spanish from Spain)
+ */
+
+export const generateSpeech = async (text, voice = 'es-MX-DaliaNeural', speed = 1.0) => {
     try {
         const { data, error } = await supabase.functions.invoke('generate-speech', {
             body: {
                 text,
                 speed,
-                provider: 'openai',
                 voice
             }
         });
@@ -19,16 +28,16 @@ export const generateOpenAISpeech = async (text, voice = 'nova', speed = 1.0) =>
         if (error) {
             const details = error.context ? await error.context.json().catch(() => null) : null;
             const message = details?.error || error.message || 'Unknown error';
-            throw new Error(`Secure Speech Error (OpenAI): ${message}`);
+            throw new Error(`TTS Error: ${message}`);
         }
 
         if (!data?.audioUrl) {
-            throw new Error(`Secure Speech Error (OpenAI): Empty response from server`);
+            throw new Error(`TTS Error: Empty response from server`);
         }
 
         return data.audioUrl;
     } catch (error) {
-        console.error("Error generating speech with secured OpenAI TTS:", error);
+        console.error("Error generating speech:", error);
         throw error;
     }
 };
@@ -36,9 +45,9 @@ export const generateOpenAISpeech = async (text, voice = 'nova', speed = 1.0) =>
 /**
  * Generates speech with estimated timestamps for "karaoke" style highlighting.
  */
-export const generateOpenAISpeechWithTimestamps = async (text, voice = 'nova', speed = 1.0) => {
+export const generateSpeechWithTimestamps = async (text, voice = 'es-MX-DaliaNeural', speed = 1.0) => {
     try {
-        const audioUrl = await generateOpenAISpeech(text, voice, speed);
+        const audioUrl = await generateSpeech(text, voice, speed);
 
         // Calculate estimated alignment
         return new Promise((resolve) => {
@@ -71,7 +80,11 @@ export const generateOpenAISpeechWithTimestamps = async (text, voice = 'nova', s
             };
         });
     } catch (error) {
-        console.error("OpenAI Timestamp Gen Failed (Secured):", error);
+        console.error("TTS Timestamp Generation Failed:", error);
         throw error;
     }
 };
+
+// Legacy export for backwards compatibility
+export const generateOpenAISpeech = generateSpeech;
+export const generateOpenAISpeechWithTimestamps = generateSpeechWithTimestamps;

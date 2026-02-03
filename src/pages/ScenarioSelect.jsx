@@ -5,7 +5,7 @@ import { Users, Coffee, MapPin, ArrowLeft, Home, Briefcase, CloudRain, Smile, Pa
 import { useMystery } from '../hooks/useMystery';
 import { generateSurpriseScenario } from '../lib/MysteryGenerator';
 import AdventureMap from '../components/AdventureMap';
-import { generateOpenAISpeech } from '../lib/openai_tts';
+import { generateSpeech } from '../lib/tts';
 import { useRef } from 'react';
 import { Volume2 } from 'lucide-react';
 
@@ -159,8 +159,8 @@ export default function ScenarioSelect({ ageLevel, spanishLevel, setSpanishLevel
 
         setIsNarrating(true);
         try {
-            const voiceId = scenarioVoiceId || 'nova';
-            const url = await generateOpenAISpeech(text, voiceId, 1.0);
+            const voiceId = scenarioVoiceId || 'es-MX-DaliaNeural';
+            const url = await generateSpeech(text, voiceId, 1.0);
             const audio = new Audio(url);
             audioRef.current = audio;
             audio.onended = () => {
@@ -191,7 +191,7 @@ export default function ScenarioSelect({ ageLevel, spanishLevel, setSpanishLevel
 
         // Smart Voice Detection
         const topic = customTopic.toLowerCase();
-        let voice_id = 'nova'; // Default
+        let voice_id = 'es-MX-DaliaNeural'; // Default female voice
 
         if (topic.includes('abuela') || topic.includes('grandma') || topic.includes('elderly')) {
             voice_id = 'sage';
@@ -199,8 +199,8 @@ export default function ScenarioSelect({ ageLevel, spanishLevel, setSpanishLevel
             voice_id = 'coral';
         } else if (topic.includes('boy') || topic.includes('youth')) {
             voice_id = 'ash';
-        } else if (topic.includes('man') || topic.includes('guy') || topic.includes('onyx')) {
-            voice_id = 'onyx';
+        } else if (topic.includes('man') || topic.includes('guy')) {
+            voice_id = 'es-MX-JorgeNeural'; // Male voice
         }
 
         const scenarioData = {

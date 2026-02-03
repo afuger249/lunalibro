@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Mic, MicOff, X, Settings, Loader, Volume2, Keyboard, Lightbulb, Languages, Sparkles, MapPin, ArrowRight, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getChatResponse } from '../lib/openai';
-import { generateOpenAISpeech } from '../lib/openai_tts';
+import { generateSpeech } from '../lib/tts';
 
 import { supabase } from '../lib/supabase';
 import confetti from 'canvas-confetti';
@@ -76,12 +76,15 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
     const scrollRef = useRef(null);
 
     // Initial safe voice selection
-    const [selectedVoiceId, setSelectedVoiceId] = useState('nova');
+    const [selectedVoiceId, setSelectedVoiceId] = useState('es-MX-DaliaNeural');
 
     const initializationRef = useRef(false);
 
     // Initialize messages
     useEffect(() => {
+        if (initializationRef.current === scenario?.id) return;
+        initializationRef.current = scenario?.id;
+
         // Reset state for new scenario
         setMessages([]);
         setExchangeCount(0);
@@ -127,42 +130,46 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
             `;
         } else {
             // --- STANDARD CONVERSATION LOGIC ---
-            // A0 Specific Logic
-            const kidModifier = ageLevel === 'kid' ? `KIDS MODE: Simple words. Fun tone.` : `Target: ${spanishLevel}`;
+            const isA1 = spanishLevel === 'A1';
+            const kidModifier = ageLevel === 'kid' ? `KIDS MODE: Use very simple, child-friendly words. Avoid any adult topics or metaphors.` : `General Learner`;
 
             let levelInstruction = "";
             if (isA0) {
                 levelInstruction = `
                 ABSOLUTE BEGINNER (A0) MODE:
-                1. SPANISH ONLY in main response: Only say the Spanish phrase. Do NOT include English in parentheses.
-                2. VISUAL VOCAB: Use an emoji next to every noun. Example: "Veo un gato 🐱".
-                3. SUPER SIMPLE: Use max 3-5 word sentences.
-                4. SLOW: Do not ask complex questions. Just ask "Yes or No?" or "Red or Blue?".
-                5. OPTIONS: At the very end of your response, provide 2-3 simple suggested replies for the user. output them as a hidden JSON block like this:
-                |||JSON:[{"spanish":"Si","english":"Yes"},{"spanish":"No","english":"No"}]|||
+                1. STRICT LIMIT: Never say more than 5 words at a time.
+                2. NO GRAMMAR: Use mostly nouns and simple greetings. No complex sentences.
+                3. NO SUBJUNCTIVE/PAST TENSE: Only present tense or single words.
+                4. VISUALS: Every noun MUST have an emoji (e.g. "Gato 🐱").
+                5. SUGGESTIONS: Always provide 2 simple options like |||JSON:[{"spanish":"Sí","english":"Yes"},{"spanish":"No","english":"No"}]|||
+                EXAMPLE RESPONSE: "¡Hola! 👋 ¿Café ☕ o Agua 💧?"
+                `;
+            } else if (isA1) {
+                levelInstruction = `
+                BEGINNER (A1) MODE:
+                1. SHORT SENTENCES: 1 sentence maximum. Max 10 words.
+                2. SIMPLEST GRAMMAR: Only use Subject + Verb + Object. No complex clauses or subjunctive.
+                3. EMOJIS: Use emojis for all key nouns.
+                4. LANGUAGE: 100% Spanish.
+                5. EXAMPLE: "Tengo una manzana 🍎 roja."
                 `;
             } else {
                 levelInstruction = `
-                 1. LENGTH: 2-3 sentences per response. (Maintain "Flow and Melody").
-                 2. RECAST: Always repeat the user's correct intent in natural Spanish as your first sentence.
-                 3. SCAFFOLDING (Forced Choice): If the user is struggling or to move the task forward, offer 2 choices (e.g. "¿Quieres A o B?").
-                 4. VISUALS: Use an emoji next to every noun (e.g. café ☕). Use relational emojis for directions (⬅️, ➡️, 📍).
-                 5. NUMBER REINFORCEMENT: Write prices/numbers in WORDS and DIGITS (e.g. "diez (10)").
-                 6. ${kidModifier}
-                 7. 100% Spanish. No translations.
-                 8. DIRECT BUT FRIENDLY: Eliminate fluff, but keep the conversation natural and helpful.
+                 1. LENGTH: 2 short sentences per response. 
+                 2. RECAST: Briefly repeat the user's intent to show you understood.
+                 3. VISUALS: Use emojis for nouns.
+                 4. ${kidModifier}
                  `;
             }
 
             systemInstruction = `
-            ACT AS THE CHARACTER: ${scenarioPrompt}
-            CORE MISSION: You are a Lumi Language Guide. Your goal is to provide warm, Comprehensible Input while going on this adventure together.
-            CURRENT MOOD: ${randomMood}
+            ACT AS: ${scenarioPrompt}
+            CORE MISSION: You are a Language Guide for a ${ageLevel}. Use ${spanishLevel} Spanish.
             
-            CRITICAL LEARNING RULES:
+            STRICT RULES:
             ${levelInstruction}
             
-            BRAND TONE: You are LumiLibro's spirit. Use small magical metaphors (e.g., "Let's light up this path").
+            CHARACTER TRAITS: Warm and patient.
             `;
         }
 
@@ -171,7 +178,9 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
         if (scenario) {
             handleUserMessage('¡Hola!', true, initialMessages);
         }
-    }, [scenario, ageLevel, spanishLevel]);
+
+        return () => { };
+    }, [scenario?.id, spanishLevel, ageLevel]); // Re-run if level or age changes
 
     const [captions, setCaptions] = useState('Press mic to start...');
     const [englishCaption, setEnglishCaption] = useState('');
@@ -261,27 +270,17 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
             if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
                 recognition.continuous = true;
-                recognition.lang = 'es-ES';
+                recognition.lang = 'es-MX';
                 recognition.interimResults = true;
                 recognition.onresult = (event) => {
-                    let interimTranscript = '';
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        interimTranscript += event.results[i][0].transcript;
+                    let fullTranscript = '';
+                    for (let i = 0; i < event.results.length; ++i) {
+                        fullTranscript += event.results[i][0].transcript;
                     }
-                    if (interimTranscript) {
-                        setTranscript(interimTranscript.trim());
-                        console.log("STT Interim Transcript:", interimTranscript.trim());
+                    if (fullTranscript) {
+                        setTranscript(fullTranscript.trim());
+                        console.log("STT Transcript update:", fullTranscript.trim());
                     }
-                    clearTimeout(silenceTimerRef.current);
-                    silenceTimerRef.current = setTimeout(() => {
-                        const final = interimTranscript.trim();
-                        if (final && final.toLowerCase() !== 'test') {
-                            console.log("STT Silence Detected, processing final transcript:", final);
-                            handleUserMessage(final);
-                            setTranscript('');
-                            recognition.stop();
-                        }
-                    }, 1500); // Reduced from 2000ms to 1500ms for snappiness
                 };
                 recognition.onerror = (event) => {
                     console.error("STT Error Event:", event.error);
@@ -331,6 +330,12 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
         if (isListening) {
             recognitionRef.current.stop();
             clearTimeout(silenceTimerRef.current);
+
+            // Send the accumulated transcript when the user manually stops
+            if (transcript.trim()) {
+                handleUserMessage(transcript.trim());
+                setTranscript('');
+            }
             setIsListening(false);
         } else {
             setTranscript('');
@@ -451,13 +456,13 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
     const triggerCelebration = () => {
         // Set Lumi Flag for the Map Celebration
         if (scenario?.id) {
-            localStorage.setItem('LUMILIBRO_COMPLETED_NODE', JSON.stringify({
+            localStorage.setItem('LUNALIBRO_COMPLETED_NODE', JSON.stringify({
                 id: scenario.id,
                 color: scenario.color || '#F59E0B'
             }));
 
             // Create a "Story Seed" for the nightly ritual
-            localStorage.setItem('LUMILIBRO_STORY_SEED', JSON.stringify({
+            localStorage.setItem('LUNALIBRO_STORY_SEED', JSON.stringify({
                 scenarioId: scenario.id,
                 title: scenario.title,
                 timestamp: new Date().toISOString(),
@@ -499,11 +504,14 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
         setIsNarrating(true);
         setIsSpeaking(true);
         try {
-            // Use scenario-specific voice if provided, default to 'nova'
-            const voiceId = scenario?.voice_id || 'nova';
-            console.log(`OpenAI TTS using voice: ${voiceId} for scenario: ${scenario?.title}`);
+            // Strip emojis for TTS (Azure/OpenAI often try to describe them)
+            const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
 
-            const url = await generateOpenAISpeech(text, voiceId, speechSpeed);
+            // Use scenario-specific voice if provided, default to Azure Spanish
+            const voiceId = scenario?.voice_id || 'es-MX-DaliaNeural';
+            console.log(`Azure TTS using voice: ${voiceId} for scenario: ${scenario?.title}`);
+
+            const url = await generateSpeech(cleanText, voiceId, speechSpeed);
 
             const audio = new Audio(url);
             modalAudioRef.current = audio;
@@ -520,7 +528,7 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
                 });
             }
         } catch (err) {
-            console.error("Narration failed completely", err);
+            console.error("Azure TTS failed completely", err);
             setIsNarrating(false);
         }
     };
@@ -602,18 +610,19 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
             setCaptions(aiText);
             setEnglishCaption(translation);
 
-            // Audio - OpenAI Dedicated
             let url = null;
-
             try {
-                const narrationText = aiText;
+                // Strip emojis for TTS
+                const narrationText = aiText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
                 // Pass speechSpeed explicitly
-                url = await generateOpenAISpeech(narrationText, scenario?.voice_id || 'nova', speechSpeed);
+                url = await generateSpeech(narrationText, scenario?.voice_id || 'es-MX-DaliaNeural', speechSpeed);
             } catch (oaError) {
-                console.error("OpenAI TTS failed.", oaError);
+                console.error("Azure TTS failed.", oaError);
             }
 
             if (url && audioRef.current && !showClueFoundRef.current) {
+                // Ensure existing audio is stopped
+                audioRef.current.pause();
                 audioRef.current.src = url;
                 audioRef.current.playbackRate = speechSpeed;
                 audioRef.current.onplay = () => setIsSpeaking(true);
@@ -749,7 +758,7 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
 
                 <div style={{ flex: 1, textAlign: 'center', overflow: 'hidden' }}>
                     <h1 style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--color-primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {scenario?.title || 'LumiLibro'}
+                        {scenario?.title || 'Luna and Friends'}
                     </h1>
                     {scenario?.description && (
                         <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: 0.8 }}>
@@ -969,7 +978,7 @@ export default function ChatSession({ ageLevel, setAgeLevel, spanishLevel, setSp
                                     <div
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            generateOpenAISpeech(s.spanish, selectedVoiceId, 0.9).then(url => {
+                                            generateSpeech(s.spanish, selectedVoiceId, 0.9).then(url => {
                                                 const audio = new Audio(url);
                                                 audio.play();
                                             }).catch(err => console.error(err));

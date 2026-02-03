@@ -36,20 +36,32 @@
 
   --animation-speed: 0.3s;
 
-  /* --- LUMILIBRO BRAND PALETTE (Rebrand 2025) --- */
+  /* --- LUNALIBRO BRAND PALETTE (Rebrand 2025) --- */
   /* "Warm • Curious • Calm • Magical" */
-  --lumi-blue: #4A6FA5;
+  --luna-blue: #4A6FA5;
   /* Storybook Blue: Calm, Trustworthy */
-  --lumi-gold: #F6C66A;
+  --luna-gold: #F6C66A;
   /* Warm Golden Glow: Magic, Learning */
-  --lumi-lavender: #B8A7D6;
+  --luna-lavender: #B8A7D6;
   /* Soft Lavender: Gentle Accent */
-  --lumi-cream: #FFF4E6;
+  --luna-cream: #FFF4E6;
   /* Paper Cream: Background, Cozy */
-  --lumi-text: #2D3748;
+  --luna-text: #2D3748;
   /* Softer Dark Grey for text */
-  --lumi-text-light: #718096;
+  --luna-text-light: #718096;
   /* Secondary text */
+
+  /* Standardized Breakpoints - Mobile First */
+  --breakpoint-xs: 390px;
+  /* iPhone 14 Pro, iPhone 12/13 Mini */
+  --breakpoint-sm: 640px;
+  /* Small tablets, large phones landscape */
+  --breakpoint-md: 768px;
+  /* iPad Mini portrait */
+  --breakpoint-lg: 1024px;
+  /* iPad Pro portrait, laptops */
+  --breakpoint-xl: 1280px;
+  /* Desktop */
 }
 
 /* Adult/Professional Modern Light Mode Override */
@@ -120,7 +132,7 @@ b.font-serif {
 }
 
 .magic-paper {
-  background-color: var(--lumi-cream);
+  background-color: var(--luna-cream);
   background-image: radial-gradient(#e5e7eb 0.5px, transparent 0.5px);
   background-size: 20px 20px;
 }
@@ -279,6 +291,27 @@ body.adult-mode select.input {
 
   h1 {
     font-size: 1.5rem !important;
+  }
+
+  /* Prevent iOS zoom - enforce 16px minimum */
+  .input,
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 1rem !important;
+    /* 16px minimum */
+  }
+
+  /* Enhanced touch targets for mobile */
+  .btn {
+    min-height: 52px;
+    padding: 1rem 1.75rem;
+  }
+
+  .btn-icon {
+    min-width: 48px;
+    min-height: 48px;
   }
 
   .hide-mobile {

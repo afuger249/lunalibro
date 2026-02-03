@@ -13,14 +13,13 @@ import learnerAvatar from '../assets/avatars/learner.png';
 import backpack3d from '../assets/backpack_3d.png';
 import mysteryHq3d from '../assets/mystery_hq_3d.png';
 import pixarMap from '../assets/pixar_map.png';
-import LumiLogo from '../components/LumiLogo';
+import LunaLogo from '../components/LunaLogo';
 
 // Redesign Components
 import SunMoonLayout from '../components/dashboard/SunMoonLayout';
 import BottomDock from '../components/dashboard/BottomDock';
 import DailyChest from '../components/dashboard/DailyChest';
 import InteractiveScenery from '../components/dashboard/InteractiveScenery';
-import LumiGuide from '../components/dashboard/LumiGuide';
 
 export default function Dashboard({ ageLevel, setAgeLevel, spanishLevel, setSpanishLevel }) {
     const navigate = useNavigate();
@@ -57,7 +56,7 @@ export default function Dashboard({ ageLevel, setAgeLevel, spanishLevel, setSpan
                 .from('profiles')
                 .select('full_name, total_minutes')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
 
             if (profileData) {
                 setFullName(profileData.full_name || '');
@@ -411,7 +410,7 @@ export default function Dashboard({ ageLevel, setAgeLevel, spanishLevel, setSpan
                                         npc: step.npc,
                                         clue: step.clue,
                                         requiredKeyword: step.requiredKeyword,
-                                        voice_id: step.voice_id || 'nova' // Use a default or dynamic voice
+                                        voice_id: step.voice_id || 'es-MX-DaliaNeural' // Azure default voice
                                     }
                                 }
                             });
@@ -421,7 +420,6 @@ export default function Dashboard({ ageLevel, setAgeLevel, spanishLevel, setSpan
 
                     {/* 3. Hooks */}
                     {/* 3. Hooks */}
-                    <LumiGuide />
                     {/* DailyChest moved to header */}
 
 
@@ -1001,7 +999,7 @@ export default function Dashboard({ ageLevel, setAgeLevel, spanishLevel, setSpan
                 }
                 
                 /* Responsive Overrides */
-                @media (max-width: 600px) {
+                @media (max-width: 640px) {
                     .kid-interactive-label {
                         transform: scale(0.7) !important;
                     }

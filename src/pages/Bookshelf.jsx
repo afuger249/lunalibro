@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Plus, Trash2, BookOpen, Download, X, Home, Loader, AlertTriangle } from 'lucide-react';
+import { Sparkles, Plus, Trash2, BookOpen, Download, X, Home, Loader, AlertTriangle, Share2 as ShareIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getStorybooksHistory, deleteStorybook, getStorybookById } from '../lib/storybook_storage';
 import { generateStoryPDF } from '../lib/pdf_generator';
+import { Share } from '@capacitor/share';
 import { supabase } from '../lib/supabase';
 import CustomModal from '../components/CustomModal';
 
@@ -71,10 +72,27 @@ export default function Bookshelf() {
         e.preventDefault();
         if (!userId) return;
 
-        // If it's already generated and ready, trigger the final trusted click
+        // If it's already generated and ready, use it
         if (readyPDFs[storySummary.id]) {
-            const { trigger } = readyPDFs[storySummary.id];
-            trigger();
+            const pdf = readyPDFs[storySummary.id];
+
+            // Native Sharing check
+            try {
+                const canShare = await Share.canShare();
+                if (canShare.value) {
+                    await Share.share({
+                        title: storySummary.title || 'My Magic Story',
+                        text: `Check out my story: ${storySummary.title}`,
+                        url: pdf.blobUrl,
+                        dialogTitle: 'Share Story PDF'
+                    });
+                    return;
+                }
+            } catch (err) {
+                console.warn('Native share failed/unavailable, falling back to download');
+            }
+
+            pdf.trigger();
             return;
         }
 
@@ -88,6 +106,21 @@ export default function Bookshelf() {
                         ...prev,
                         [storySummary.id]: result
                     }));
+
+                    // Automatic Native Share after generation
+                    try {
+                        const canShare = await Share.canShare();
+                        if (canShare.value) {
+                            await Share.share({
+                                title: storySummary.title || 'My Magic Story',
+                                text: `Check out my story: ${storySummary.title}`,
+                                url: result.blobUrl,
+                                dialogTitle: 'Share Story PDF'
+                            });
+                        }
+                    } catch (err) {
+                        console.warn('Auto-share failed');
+                    }
                 }
             } else {
                 setModalConfig({
@@ -267,7 +300,7 @@ export default function Bookshelf() {
                                                 transform: 'translateZ(10px)',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center'
                                             }}
-                                            title={readyPDFs[story.id] ? "Download Now" : "Paint PDF"}
+                                            title={readyPDFs[story.id] ? "Share Now" : "Share Story PDF"}
                                         >
                                             {downloadingId === story.id ? (
                                                 <Loader size={18} className="animate-spin" />
@@ -276,7 +309,7 @@ export default function Bookshelf() {
                                                     <Sparkles size={18} />
                                                 </motion.div>
                                             ) : (
-                                                <Download size={18} />
+                                                <ShareIcon size={18} />
                                             )}
                                         </button>
                                     </div>

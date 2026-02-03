@@ -17,7 +17,7 @@ export default function Legal({ type, ageLevel }) {
             },
             {
                 h: "Children's Privacy",
-                p: 'LumiLibro is designed for children. We do not sell data and audio is processed securely.'
+                p: 'Luna and Friends is designed for children. We do not sell data and audio is processed securely.'
             },
             {
                 h: 'How We Use Info',
@@ -30,7 +30,7 @@ export default function Legal({ type, ageLevel }) {
         sections: [
             {
                 h: 'Acceptance of Terms',
-                p: 'By using LumiLibro, you agree to these terms.'
+                p: 'By using Luna and Friends, you agree to these terms.'
             },
             {
                 h: 'User Conduct',
@@ -38,7 +38,7 @@ export default function Legal({ type, ageLevel }) {
             },
             {
                 h: 'Intellectual Property',
-                p: 'All content in LumiLibro is owned by us or our licensors.'
+                p: 'All content in Luna and Friends is owned by us or our licensors.'
             }
         ]
     };

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import SunCard from './SunCard';
 import MoonCard from './MoonCard';
-import logo from '../../assets/lumilibro_app_icon.png';
+import logo from '../../assets/luna_and_friends_logo.png';
 
 export default function SunMoonLayout({ onSunClick, onMoonClick, activeMission }) {
     return (
@@ -33,7 +33,7 @@ export default function SunMoonLayout({ onSunClick, onMoonClick, activeMission }
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                     <img
                         src={logo}
-                        alt="LunaLibro"
+                        alt="Luna and Friends"
                         style={{
                             width: '48px',
                             height: '48px',
@@ -42,7 +42,7 @@ export default function SunMoonLayout({ onSunClick, onMoonClick, activeMission }
                         }}
                     />
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontFamily: 'Outfit', fontWeight: '800', fontSize: '1.2rem', color: '#1F2937', lineHeight: 1 }}>LunaLibro</span>
+                        <span style={{ fontFamily: 'Outfit', fontWeight: '800', fontSize: '1.2rem', color: '#1F2937', lineHeight: 1 }}>Luna & Friends</span>
                     </div>
                 </div>
             </div>

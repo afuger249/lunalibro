@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, Coffee, Home, Palmtree, GraduationCap, MapPin, Sparkles, Loader, Volume2, Info, Plus } from 'lucide-react';
 import lumiTownMap from '../assets/lumi_town_map.png';
-import { generateOpenAISpeech } from '../lib/openai_tts';
+import { generateSpeech } from '../lib/tts';
 import confetti from 'canvas-confetti';
 
 // Avatar Assets
@@ -58,14 +58,14 @@ const AdventureMap = ({ scenarios, onSelectScenario, onBack, onSurpriseMe, onCre
                 setShowIntroModal(true);
             }
         } else if (!mysteryState?.isActive) {
-            const seenWelcome = localStorage.getItem('LUMILIBRO_SEEN_WELCOME');
+            const seenWelcome = localStorage.getItem('LUNALIBRO_SEEN_WELCOME');
             if (!seenWelcome) {
                 setShowTownWelcome(true);
             }
         }
 
         // Check for Completed Node Celebration
-        const completedNodeStr = localStorage.getItem('LUMILIBRO_COMPLETED_NODE');
+        const completedNodeStr = localStorage.getItem('LUNALIBRO_COMPLETED_NODE');
         if (completedNodeStr) {
             try {
                 const completedNode = JSON.parse(completedNodeStr);
@@ -86,7 +86,7 @@ const AdventureMap = ({ scenarios, onSelectScenario, onBack, onSurpriseMe, onCre
                         });
                     }, 500);
                 }
-                localStorage.removeItem('LUMILIBRO_COMPLETED_NODE');
+                localStorage.removeItem('LUNALIBRO_COMPLETED_NODE');
             } catch (e) {
                 console.error("Failed to parse completed node", e);
             }
@@ -120,7 +120,10 @@ const AdventureMap = ({ scenarios, onSelectScenario, onBack, onSurpriseMe, onCre
 
         try {
             setIsNarrating(true);
-            const url = await generateOpenAISpeech(text, 'nova', 1.0);
+            // Strip emojis for TTS
+            const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+
+            const url = await generateSpeech(cleanText, 'es-MX-DaliaNeural', 1.0);
             const audio = new Audio(url);
             narrationAudioRef.current = audio;
             audio.play();
@@ -462,7 +465,7 @@ const AdventureMap = ({ scenarios, onSelectScenario, onBack, onSurpriseMe, onCre
                         fontFamily: 'var(--font-family-body)',
                         letterSpacing: '0.05em'
                     }}>
-                        LUMI TOWN
+                        LUNA TOWN
                     </h1>
 
                     <motion.div
@@ -585,7 +588,7 @@ const AdventureMap = ({ scenarios, onSelectScenario, onBack, onSurpriseMe, onCre
                             </div>
 
                             <h2 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#3F6212', marginBottom: '1rem', lineHeight: 1.1 }}>
-                                Welcome to Lumi Town! 🏡
+                                Welcome to Luna Town! 🏡
                             </h2>
 
                             <p style={{ fontSize: '1.1rem', color: '#4D7C0F', marginBottom: '1.5rem', lineHeight: 1.5 }}>
@@ -607,7 +610,7 @@ const AdventureMap = ({ scenarios, onSelectScenario, onBack, onSurpriseMe, onCre
                             <button
                                 onClick={() => {
                                     setShowTownWelcome(false);
-                                    localStorage.setItem('LUMILIBRO_SEEN_WELCOME', 'true');
+                                    localStorage.setItem('LUNALIBRO_SEEN_WELCOME', 'true');
                                 }}
                                 style={{
                                     background: '#84CC16',

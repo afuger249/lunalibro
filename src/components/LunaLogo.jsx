@@ -1,8 +1,8 @@
 
 import React from 'react';
-import logoAsset from '../assets/logo-star.png';
+import logoAsset from '../assets/luna_and_friends_logo.png';
 
-const LumiLogo = ({ size = 50, glow = true }) => {
+const LunaLogo = ({ size = 50, glow = true }) => {
     return (
         <div style={{
             width: size,
@@ -12,32 +12,33 @@ const LumiLogo = ({ size = 50, glow = true }) => {
             justifyContent: 'center',
             position: 'relative'
         }}>
-            {/* Background Glow - Subtle gold halo */}
+            {/* Background Glow - Vibrant teal/coral halo */}
             {glow && (
                 <div style={{
                     position: 'absolute',
                     width: '120%',
                     height: '120%',
-                    background: 'radial-gradient(circle, rgba(246, 198, 106, 0.3) 0%, rgba(246, 198, 106, 0) 70%)',
+                    background: 'radial-gradient(circle, rgba(6, 182, 212, 0.3) 0%, rgba(244, 63, 94, 0.2) 70%)',
                     borderRadius: '50%',
                     zIndex: 0,
-                    filter: 'blur(8px)'
+                    filter: 'blur(12px)'
                 }} />
             )}
 
             <img
                 src={logoAsset}
-                alt="LumiLibro Logo"
+                alt="Luna and Friends Logo"
                 style={{
-                    width: '90%',
-                    height: '90%',
+                    width: '100%',
+                    height: '100%',
                     objectFit: 'contain',
                     position: 'relative',
-                    zIndex: 1
+                    zIndex: 1,
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))'
                 }}
             />
         </div>
     );
 };
 
-export default LumiLogo;
+export default LunaLogo;

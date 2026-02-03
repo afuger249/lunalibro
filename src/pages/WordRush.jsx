@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Zap, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import FlashCard from '../components/FlashCard';
 import SessionSummary from '../components/SessionSummary';
+import { soundEffects } from '../lib/sounds';
 
 export default function WordRush({ ageLevel, spanishLevel }) {
     const navigate = useNavigate();
@@ -55,11 +57,13 @@ export default function WordRush({ ageLevel, spanishLevel }) {
     const handleCorrect = async () => {
         setScore(prev => ({ ...prev, correct: prev.correct + 1 }));
         setCurrentStreak(prev => prev + 1);
+        Haptics.notification({ type: NotificationType.Success }).catch(() => { });
         await updateWordProgress(sessionWords[currentWordIndex].id, true);
 
         // Check for milestone (every 5 correct)
         if ((score.correct + 1) % 5 === 0 && score.correct + 1 > 0) {
             setShowMilestone(true);
+            soundEffects.playMilestone();
             setTimeout(() => setShowMilestone(false), 2000);
         }
 
@@ -75,6 +79,7 @@ export default function WordRush({ ageLevel, spanishLevel }) {
     const handleIncorrect = async (spokenText) => {
         setScore(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
         setCurrentStreak(0); // Reset streak on incorrect
+        Haptics.notification({ type: NotificationType.Error }).catch(() => { });
         await updateWordProgress(sessionWords[currentWordIndex].id, false);
 
         if (currentWordIndex < sessionWords.length - 1) {
@@ -139,15 +144,15 @@ export default function WordRush({ ageLevel, spanishLevel }) {
                         <h1 style={{
                             fontSize: 'clamp(1.2rem, 5vw, 2.25rem)',
                             fontWeight: '900',
-                            color: 'var(--color-primary)',
+                            color: 'var(--luna-gold)',
                             letterSpacing: '-0.02em',
                             display: 'block',
                             lineHeight: 1.1
                         }}>
-                            ⚡ Word Rush
+                            ✨ Word Rush
                         </h1>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', fontWeight: 'bold', marginTop: '0.2rem' }}>
-                            Quick Spanish vocabulary practice!
+                        <p style={{ color: 'var(--luna-text-light)', fontSize: '0.9rem', fontWeight: 'bold', marginTop: '0.2rem' }}>
+                            Choose your adventure and practice Spanish!
                         </p>
                     </div>
                 </header>
@@ -168,7 +173,35 @@ export default function WordRush({ ageLevel, spanishLevel }) {
                         gap: '2rem',
                     }}
                 >
-                    {[10, 20, 30].map(length => (
+                    {[
+                        {
+                            length: 10,
+                            title: '⚡ Lightning Dash',
+                            subtitle: 'Quick & snappy!',
+                            icon: '/word_rush_sprint.png',
+                            color: 'var(--luna-gold)',
+                            bgColor: '#FFF4E6',
+                            emoji: '⚡'
+                        },
+                        {
+                            length: 20,
+                            title: '🚀 Rocket Ride',
+                            subtitle: 'Blast off to learning!',
+                            icon: '/word_rush_adventure.png',
+                            color: 'var(--luna-lavender)',
+                            bgColor: '#F3EFFC',
+                            emoji: '🚀'
+                        },
+                        {
+                            length: 30,
+                            title: '👑 Champion Quest',
+                            subtitle: 'For word wizards!',
+                            icon: '/word_rush_champion.png',
+                            color: 'var(--luna-blue)',
+                            bgColor: '#EEF4FB',
+                            emoji: '👑'
+                        }
+                    ].map(({ length, title, subtitle, icon, color, bgColor, emoji }) => (
                         <motion.button
                             key={length}
                             variants={{
@@ -189,68 +222,82 @@ export default function WordRush({ ageLevel, spanishLevel }) {
                                 padding: '2rem',
                                 cursor: loading ? 'wait' : 'pointer',
                                 borderRadius: isKid ? '40px' : 'var(--radius-lg)',
-                                background: 'var(--color-bg-secondary)',
-                                borderColor: isKid ? '#F59E0B' : 'var(--border-color)',
-                                borderWidth: isKid ? '6px' : '1px',
-                                boxShadow: isKid ? `0 10px 0 #F59E0B40` : 'var(--shadow-sm)',
-                                transition: 'all 0.3s ease'
+                                background: 'linear-gradient(135deg, var(--color-bg-secondary) 0%, ' + bgColor + ' 100%)',
+                                borderColor: color,
+                                borderWidth: isKid ? '5px' : '2px',
+                                borderStyle: 'solid',
+                                boxShadow: isKid ? `0 8px 0 ${color}40, 0 12px 24px rgba(0,0,0,0.1)` : 'var(--shadow-md)',
+                                transition: 'all 0.3s ease',
+                                position: 'relative',
+                                overflow: 'hidden'
                             }}
                         >
+                            {/* Playful icon */}
                             <div style={{
-                                padding: isKid ? '1.5rem' : '1rem',
-                                borderRadius: isKid ? '30px' : 'var(--radius-md)',
-                                backgroundColor: isKid ? '#FEF3C715' : 'var(--color-bg-surface)',
-                                color: '#F59E0B',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                width: '80px',
-                                height: '80px'
+                                width: '100px',
+                                height: '100px',
+                                position: 'relative'
                             }}>
-                                <Zap size={isKid ? 48 : 40} fill="#F59E0B" />
+                                <img
+                                    src={icon}
+                                    alt={title}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'contain',
+                                        filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))'
+                                    }}
+                                />
                             </div>
 
-                            <div style={{ flex: 1 }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
                                 <h3 style={{
-                                    fontSize: isKid ? '3rem' : '2.5rem',
+                                    fontSize: isKid ? '1.5rem' : '1.3rem',
                                     fontWeight: '900',
-                                    color: '#F59E0B',
+                                    color: color,
+                                    margin: 0,
+                                    marginBottom: '0.5rem',
+                                    lineHeight: 1.2
+                                }}>
+                                    {title}
+                                </h3>
+                                <p style={{
+                                    color: 'var(--luna-text)',
+                                    fontSize: isKid ? '1rem' : '0.95rem',
+                                    fontWeight: '600',
                                     margin: 0,
                                     marginBottom: '0.5rem'
                                 }}>
-                                    {length}
-                                </h3>
-                                <p style={{
-                                    color: 'var(--color-text-secondary)',
-                                    fontSize: isKid ? '1.1rem' : '1rem',
-                                    fontWeight: '600',
-                                    margin: 0
-                                }}>
-                                    {length === 10 ? 'Quick Sprint' : length === 20 ? 'Medium Practice' : 'Full Challenge'}
+                                    {subtitle}
                                 </p>
                                 <p style={{
-                                    color: 'var(--color-text-secondary)',
+                                    color: 'var(--luna-text-light)',
                                     fontSize: '0.85rem',
-                                    opacity: 0.7,
-                                    marginTop: '0.5rem'
+                                    fontWeight: '500',
+                                    margin: 0
                                 }}>
-                                    ~{Math.ceil(length / 4)} minutes
+                                    {length} words • ~{Math.ceil(length / 4)} min
                                 </p>
                             </div>
 
                             <div style={{
                                 marginTop: 'auto',
-                                backgroundColor: '#F59E0B',
+                                backgroundColor: color,
                                 color: 'white',
-                                padding: '0.6rem 1.5rem',
-                                borderRadius: '20px',
+                                padding: '0.75rem 1.5rem',
+                                borderRadius: isKid ? '25px' : '15px',
                                 fontWeight: '900',
-                                fontSize: '0.9rem',
+                                fontSize: isKid ? '1.1rem' : '0.95rem',
                                 width: '100%',
                                 textAlign: 'center',
-                                boxShadow: isKid ? '0 4px 0 rgba(0,0,0,0.2)' : 'none'
+                                boxShadow: isKid ? '0 4px 0 rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.15)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px'
                             }}>
-                                {loading ? 'LOADING...' : isKid ? 'GO!' : 'START'}
+                                {loading ? '✨ Loading...' : isKid ? `Let's Go! ${emoji}` : `Start ${emoji}`}
                             </div>
                         </motion.button>
                     ))}
@@ -306,7 +353,7 @@ export default function WordRush({ ageLevel, spanishLevel }) {
                 style={{
                     position: 'absolute',
                     top: `calc(1.5rem + env(safe-area-inset-top))`,
-                    left: '1rem',
+                    left: `calc(1rem + env(safe-area-inset-left))`,
                     background: 'rgba(255, 255, 255, 0.95)',
                     border: 'none',
                     borderRadius: '50%',
@@ -476,7 +523,7 @@ async function updateWordProgress(vocabularyId, wasCorrect) {
             .select('*')
             .eq('user_id', user.id)
             .eq('vocabulary_id', vocabularyId)
-            .single();
+            .maybeSingle();
 
         if (existing) {
             const newCorrectCount = wasCorrect ? existing.correct_count + 1 : existing.correct_count;

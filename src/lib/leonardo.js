@@ -10,7 +10,7 @@ const BASE_URL = 'https://cloud.leonardo.ai/api/rest/v1';
  * Generate candidate portraits for a character.
  * @param {Object} character - Character details (name, type, hair, skin, clothes)
  * @param {Object} style - Selected art style object
- * @returns {Promise<string[]>} - Array of image URLs
+ * @returns {Promise<Object[]>} - Array of objects {id, url}
  */
 export async function generateCandidatePortraits(character, style) {
     if (!API_KEY) {
@@ -19,7 +19,8 @@ export async function generateCandidatePortraits(character, style) {
     }
 
     try {
-        const prompt = `${style.prompt.replace('[Subject]', `a ${character.type} named ${character.name}`)}. Features: ${character.hair} hair, ${character.eyes} eyes, ${character.skin} skin, wearing ${character.clothes}. Centered portrait, high quality, consistent lighting.`;
+        const prompt = `${style.prompt.replace('[Subject]', `a stylized ${character.type} character named ${character.name}`)}. Features: ${character.hair} hair, ${character.eyes} eyes, ${character.skin} skin, wearing ${character.clothes}. Centered portrait, high quality, consistent lighting.`;
+        const negativePrompt = "photorealistic, real life, photography, 3d render, hyperrealistic, textured skin, human features, real boy, real girl";
 
         // 1. Create Generation
         const response = await fetch(`${BASE_URL}/generations`, {
@@ -30,21 +31,26 @@ export async function generateCandidatePortraits(character, style) {
             },
             body: JSON.stringify({
                 prompt: prompt,
-                modelId: '6bef9f1b-29cb-40c7-b9df-32b51c1f67d3', // Vision XL or similar
+                negative_prompt: negativePrompt,
+                modelId: '5c232a9e-9061-4777-980a-ddc8e65647c6', // Leonardo Vision XL
                 width: 1024,
                 height: 1024,
                 num_images: 3,
-                promptMagic: true
+                alchemy: true,
+                photoReal: false,
+                presetStyle: 'NONE' // Allow the prompt style to take priority
             })
         });
 
         const data = await response.json();
+        if (!data.sdGenerationJob) {
+            throw new Error(data.message || 'Failed to start generation job');
+        }
         const generationId = data.sdGenerationJob.generationId;
 
         // 2. Wait for completion (Polling)
-        // Note: In a production app, we'd use webhooks or a more robust polling mechanism.
         let images = [];
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 20; i++) {
             await new Promise(r => setTimeout(r, 3000));
             const statusRes = await fetch(`${BASE_URL}/generations/${generationId}`, {
                 headers: { 'Authorization': `Bearer ${API_KEY}` }
@@ -52,9 +58,14 @@ export async function generateCandidatePortraits(character, style) {
             const statusData = await statusRes.json();
             const gen = statusData.generations_by_pk;
 
-            if (gen.status === 'COMPLETE') {
-                images = gen.generated_images.map(img => img.url);
+            if (gen && gen.status === 'COMPLETE') {
+                images = gen.generated_images.map(img => ({
+                    id: img.id,
+                    url: img.url
+                }));
                 break;
+            } else if (gen && gen.status === 'FAILED') {
+                throw new Error('Generation job failed');
             }
         }
 
@@ -68,7 +79,7 @@ export async function generateCandidatePortraits(character, style) {
 /**
  * Generate a story page image using character references.
  * @param {string} prompt - The image prompt.
- * @param {string[]} characterReferences - Array of master portrait URLs.
+ * @param {Object[]} characterReferences - Array of master portrait objects {id, url}.
  * @returns {Promise<string>} - Generated image URL.
  */
 export async function generateLeonardoImage(prompt, characterReferences = []) {
@@ -80,23 +91,29 @@ export async function generateLeonardoImage(prompt, characterReferences = []) {
     try {
         const body = {
             prompt: prompt,
-            modelId: '6bef9f1b-29cb-40c7-b9df-32b51c1f67d3',
+            negative_prompt: "photorealistic, real life, photography, 3d render, hyperrealistic, textured skin, human features",
+            modelId: '5c232a9e-9061-4777-980a-ddc8e65647c6', // Leonardo Vision XL
             width: 1024,
             height: 1024,
             num_images: 1,
-            promptMagic: true
+            alchemy: true,
+            photoReal: false,
+            presetStyle: 'NONE' // Allow the prompt style to take priority
         };
 
         // Add character references if provided
         if (characterReferences.length > 0) {
-            body.controlnets = characterReferences.slice(0, 4).map(url => ({
-                initImageId: url, // Leonardo might require uploading first, but some endpoints allow direct URL or reference IDs.
-                type: 'CHARACTER_REFERENCE',
+            // If multiple refs, we use Image Prompt (67) instead of Character Reference (133)
+            // to prevent the 400 "Multiple Character Reference not supported" error
+            // and reduce identity bleeding.
+            const useCR = characterReferences.length === 1;
+
+            body.controlnets = characterReferences.slice(0, 2).map(ref => ({
+                initImageId: ref.id,
+                initImageType: 'GENERATED',
+                preprocessorId: useCR ? 133 : 67, // 133 = CR, 67 = Image Prompt
                 strengthType: 'High'
             }));
-
-            // Note: Leonardo's actual /generations API might require the image to be uploaded to their S3 first.
-            // For now, we assume the provided URLs are accessible or handled by the backend/proxy.
         }
 
         const response = await fetch(`${BASE_URL}/generations`, {
@@ -109,10 +126,14 @@ export async function generateLeonardoImage(prompt, characterReferences = []) {
         });
 
         const data = await response.json();
+        if (!data.sdGenerationJob) {
+            console.error('Leonardo API Error:', data);
+            throw new Error(data.message || 'Failed to start generation job');
+        }
         const generationId = data.sdGenerationJob.generationId;
 
         let imageUrl = '';
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 25; i++) {
             await new Promise(r => setTimeout(r, 3000));
             const statusRes = await fetch(`${BASE_URL}/generations/${generationId}`, {
                 headers: { 'Authorization': `Bearer ${API_KEY}` }
@@ -120,9 +141,11 @@ export async function generateLeonardoImage(prompt, characterReferences = []) {
             const statusData = await statusRes.json();
             const gen = statusData.generations_by_pk;
 
-            if (gen.status === 'COMPLETE') {
+            if (gen && gen.status === 'COMPLETE') {
                 imageUrl = gen.generated_images[0]?.url;
                 break;
+            } else if (gen && gen.status === 'FAILED') {
+                throw new Error('Generation job failed');
             }
         }
 
@@ -141,8 +164,8 @@ function simulatePortraits(character, style) {
     // Using high-quality diverse placeholders for demonstration
     const seed = Math.floor(Math.random() * 1000);
     return [
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${character.name}_1_${seed}`,
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${character.name}_2_${seed}`,
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${character.name}_3_${seed}`
+        { id: `sim_${seed}_1`, url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${character.name}_1_${seed}` },
+        { id: `sim_${seed}_2`, url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${character.name}_2_${seed}` },
+        { id: `sim_${seed}_3`, url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${character.name}_3_${seed}` }
     ];
 }
